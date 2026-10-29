@@ -158,7 +158,7 @@ export default async function DashboardPage() {
                   <p className="font-display text-3xl font-bold text-white">
                     {primary.status === "serving" ? "Now" : `#${primary.position}`}
                   </p>
-                  <p className="mt-1 text-[11px] text-brand-100/70">
+                  <p className="mt-1 text-[11px] text-brand-700/80">
                     {primary.status === "serving"
                       ? "Proceed to counter"
                       : `~${primary.estimate.minMinutes}–${primary.estimate.maxMinutes} min`}

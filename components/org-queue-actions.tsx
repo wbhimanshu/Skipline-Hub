@@ -54,7 +54,7 @@ export function CallNext({ counters }: { counters: Counter[] }) {
 
   return (
     <div className="rounded-2xl border border-brand-400/20 bg-brand-500/[0.06] p-4">
-      <p className="flex items-center gap-2 text-xs font-semibold text-brand-100">
+      <p className="flex items-center gap-2 text-xs font-semibold text-brand-700">
         <PhoneCall className="h-4 w-4" />
         Call next customer
       </p>
@@ -220,7 +220,7 @@ export function OrgTicketActions({
         <div className="fixed inset-0 z-[90] grid place-items-center p-4">
           <button
             type="button"
-            className="absolute inset-0 bg-ink-950/75 backdrop-blur-sm"
+            className="absolute inset-0 bg-brand-900/50 backdrop-blur-sm"
             onClick={() => setMode(null)}
             aria-label="Close dialog"
           />

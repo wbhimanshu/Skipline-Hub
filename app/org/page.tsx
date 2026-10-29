@@ -116,7 +116,7 @@ export default async function OrgOverviewPage() {
               <div className="mt-4 space-y-2">
                 {queue.waiting.slice(0, 6).map((ticket) => (
                   <div key={ticket.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                    <span className="grid h-9 w-9 place-items-center rounded-lg border border-brand-400/20 bg-brand-500/10 font-display text-xs font-bold text-brand-100">
+                    <span className="grid h-9 w-9 place-items-center rounded-lg border border-brand-400/20 bg-brand-500/10 font-display text-xs font-bold text-brand-700">
                       {ticket.token_no.split("-")[1] ?? ticket.token_no}
                     </span>
                     <div className="min-w-0 flex-1">

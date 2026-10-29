@@ -53,7 +53,7 @@ export default async function AdminOrganisationsPage({
               href={tab.value === "all" ? "/admin/organisations" : `/admin/organisations?status=${tab.value}`}
               className={
                 active
-                  ? "btn btn-sm border border-brand-400/30 bg-brand-500/15 text-brand-100"
+                  ? "btn btn-sm border border-brand-400/30 bg-brand-500/15 text-brand-700"
                   : "btn btn-sm border border-white/[0.08] bg-white/[0.02] text-slate-400 hover:text-white"
               }
             >

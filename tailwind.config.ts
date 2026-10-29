@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import forms from "@tailwindcss/forms";
 
 const config: Config = {
   content: [
@@ -10,30 +11,74 @@ const config: Config = {
     extend: {
       colors: {
         ink: {
-          950: "#050817",
-          900: "#080d22",
-          850: "#0b1129",
-          800: "#0f1733",
-          700: "#162043",
-          600: "#1e2a55",
+          950: "#F7F1E7",
+          900: "#FFFCF6",
+          850: "#F2E9DB",
+          800: "#EFE3D0",
+          700: "#E8D8C3",
+          600: "#D9C4A6",
         },
         brand: {
-          50: "#f2f0ff",
-          100: "#e5e0ff",
-          200: "#cbbfff",
-          300: "#a993ff",
-          400: "#8b6cfb",
-          500: "#7c4dff",
-          600: "#6a35e8",
-          700: "#5626c2",
-          800: "#47229e",
-          900: "#3b217e",
+          50: "#FBF6ED",
+          100: "#F1E6D2",
+          200: "#7A5A2E",
+          300: "#8F6F3E",
+          400: "#A98448",
+          500: "#65452F",
+          600: "#543824",
+          700: "#432C1D",
+          800: "#332116",
+          900: "#2B1D14",
         },
         cyan: {
-          300: "#67e8f9",
-          400: "#22d3ee",
-          500: "#06b6d4",
-          600: "#0891b2",
+          100: "#8F6F3E",
+          200: "#8F6F3E",
+          300: "#8F6F3E",
+          400: "#A98448",
+          500: "#B08D53",
+          600: "#8F6F3E",
+        },
+        cream: "#FFFCF6",
+        white: "#2B1D14",
+        slate: {
+          50: "#FFFCF6",
+          100: "#F7F1E7",
+          200: "#E8D8C3",
+          300: "#5F5147",
+          400: "#786B60",
+          500: "#8A7A6C",
+          600: "#9C8B7B",
+          700: "#B5A695",
+          800: "#D9C9B5",
+          900: "#E8D8C3",
+          950: "#F2E9DB",
+        },
+        emerald: {
+          100: "#4F6B4B",
+          200: "#4F6B4B",
+          300: "#5E7A5A",
+          400: "#7C9678",
+          500: "#5E7A5A",
+          600: "#4A6448",
+          700: "#3C533B",
+        },
+        rose: {
+          100: "#9C4A33",
+          200: "#9C4A33",
+          300: "#B4553B",
+          400: "#C46A50",
+          500: "#B4553B",
+          600: "#8E3B2A",
+          700: "#733023",
+        },
+        amber: {
+          100: "#8F6F3E",
+          200: "#8F6F3E",
+          300: "#A98448",
+          400: "#C7A46A",
+          500: "#B08D53",
+          600: "#8F6F3E",
+          700: "#755A30",
         },
       },
       fontFamily: {
@@ -46,13 +91,14 @@ const config: Config = {
         ],
       },
       boxShadow: {
-        glow: "0 0 40px -8px rgba(124, 77, 255, 0.45)",
-        "glow-cyan": "0 0 40px -10px rgba(34, 211, 238, 0.4)",
-        panel: "0 24px 80px -32px rgba(2, 6, 23, 0.9)",
+        glow: "0 18px 45px -18px rgba(101, 69, 47, 0.55)",
+        "glow-cyan": "0 18px 45px -18px rgba(199, 164, 106, 0.45)",
+        panel: "0 24px 70px -36px rgba(101, 69, 47, 0.35)",
+        card: "0 14px 40px -28px rgba(101, 69, 47, 0.4)",
       },
       backgroundImage: {
         "grid-faint":
-          "linear-gradient(rgba(148,163,184,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.06) 1px, transparent 1px)",
+          "linear-gradient(rgba(101,69,47,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(101,69,47,0.06) 1px, transparent 1px)",
       },
       animation: {
         float: "float 7s ease-in-out infinite",
@@ -90,7 +136,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("@tailwindcss/forms")],
+  plugins: [forms],
 };
 
 export default config;

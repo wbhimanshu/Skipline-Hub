@@ -114,7 +114,7 @@ export default async function TicketPage({
               </div>
               {active ? (
                 <div className="grid place-items-center gap-2">
-                  <div className="overflow-hidden rounded-2xl border border-white/10 bg-white p-2">
+                  <div className="overflow-hidden rounded-2xl border border-brand-500/10 bg-[#FFFFFF] p-2">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={`/api/tickets/${ticket.id}/qr`}

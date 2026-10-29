@@ -193,8 +193,8 @@ function SuccessPanel({
           </p>
           <p className="mt-1.5 text-xs leading-relaxed text-cyan-100/70">
             SMTP is not configured, so the action link is shown here and written to{" "}
-            <code className="rounded bg-black/30 px-1 py-0.5">data/outbox.log</code>. Disable
-            with <code className="rounded bg-black/30 px-1 py-0.5">SHOW_DEV_EMAIL_LINKS=false</code>.
+            <code className="rounded bg-brand-500/10 px-1 py-0.5">data/outbox.log</code>. Disable
+            with <code className="rounded bg-brand-500/10 px-1 py-0.5">SHOW_DEV_EMAIL_LINKS=false</code>.
           </p>
           <a href={devLink} className="btn-secondary mt-3 w-full !text-xs">
             Open verification link
@@ -570,12 +570,12 @@ export function OrgRegisterForm() {
     category: "hospital",
     description: "",
     address: "",
-    city: "Pune",
-    state: "Maharashtra",
+    city: "Bhopal",
+    state: "Madhya Pradesh",
     pincode: "",
     phone: "",
-    lat: "18.5204",
-    lng: "73.8567",
+    lat: "23.2599",
+    lng: "77.4126",
     openTime: "09:00",
     closeTime: "18:00",
     services: "",

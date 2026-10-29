@@ -1,5 +1,5 @@
 import { all, one } from "./db";
-import { predictionForOrg, type Prediction } from "./prediction";
+import { predictionsForOrgs, type Prediction } from "./prediction";
 import { todayKey } from "./utils";
 
 export type Organisation = {
@@ -94,6 +94,7 @@ export function listCentres(opts: {
       );
     }
   }
+  const predictions = predictionsForOrgs(rows.map((row) => row.id));
   const listings: CentreListing[] = rows.map((row) => {
     const services = row.services
       .split(",")
@@ -101,7 +102,7 @@ export function listCentres(opts: {
       .filter(Boolean);
     return {
       ...row,
-      prediction: predictionForOrg(row.id),
+      prediction: predictions.get(row.id)!,
       distanceKm:
         typeof opts.lat === "number" && typeof opts.lng === "number"
           ? haversineKm(

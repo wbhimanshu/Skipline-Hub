@@ -21,8 +21,8 @@ function markerIcon(isOpen: boolean) {
   return L.divIcon({
     className: "",
     html: `<span style="display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:${
-      isOpen ? "rgba(139,108,251,.95)" : "rgba(100,116,139,.9)"
-    };border:2px solid rgba(255,255,255,.92);box-shadow:0 6px 22px rgba(0,0,0,.45);color:#fff;font-size:11px;font-weight:800">${isOpen ? "•" : "–"}</span>`,
+      isOpen ? "rgba(101,69,47,.95)" : "rgba(138,122,108,.9)"
+    };border:2px solid rgba(255,252,246,.95);box-shadow:0 6px 22px rgba(101,69,47,.35);color:#FFFCF6;font-size:11px;font-weight:800">${isOpen ? "•" : "–"}</span>`,
     iconSize: [30, 30],
     iconAnchor: [15, 15],
     popupAnchor: [0, -15],
@@ -42,15 +42,15 @@ export default function MapCanvas({
 }) {
   const first = points[0];
   const mapCenter: [number, number] =
-    center ?? (first ? [first.lat, first.lng] : [18.5204, 73.8567]);
+    center ?? (first ? [first.lat, first.lng] : [23.2599, 77.4126]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10" style={{ height }}>
+    <div className="overflow-hidden rounded-2xl border border-brand-500/10" style={{ height }}>
       <MapContainer
         center={mapCenter}
         zoom={points.length === 1 ? 14 : zoom}
         scrollWheelZoom={false}
-        style={{ height: "100%", width: "100%", background: "#0b1024" }}
+        style={{ height: "100%", width: "100%", background: "#EFE3D0" }}
         attributionControl
       >
         <TileLayer
@@ -69,7 +69,7 @@ export default function MapCanvas({
             <Popup>
               <div style={{ minWidth: 190 }}>
                 <strong style={{ display: "block", marginBottom: 2 }}>{point.name}</strong>
-                <span style={{ color: "#475569", fontSize: 12 }}>
+                <span style={{ color: "#786B60", fontSize: 12 }}>
                   {point.address}, {point.city}
                 </span>
                 <div style={{ margin: "8px 0", fontSize: 12 }}>
@@ -77,7 +77,7 @@ export default function MapCanvas({
                 </div>
                 <Link
                   href={`/centres/${point.slug}`}
-                  style={{ color: "#6d51e8", fontWeight: 700, fontSize: 12 }}
+                  style={{ color: "#A98448", fontWeight: 700, fontSize: 12 }}
                 >
                   View centre and join queue →
                 </Link>

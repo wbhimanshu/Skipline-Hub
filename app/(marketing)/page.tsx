@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import {
@@ -29,7 +30,6 @@ import {
   CrowdedWaitingRoomScene,
   EmergencyScene,
   FairQueueScene,
-  HeroQueueScene,
   HindiVoiceScene,
   MapCompareScene,
   PredictionScene,
@@ -134,8 +134,8 @@ export default async function LandingPage() {
   return (
     <>
       <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-grid-faint grid-overlay opacity-60" />
-        <div className="orb left-1/2 top-[-10rem] h-80 w-80 -translate-x-1/2 bg-brand-500/50" />
+        <div className="pointer-events-none absolute inset-0 bg-grid-faint grid-overlay opacity-70" />
+        <div className="orb left-1/2 top-[-10rem] h-80 w-80 -translate-x-1/2 bg-brand-300/40" />
         <div className="container-shell relative pb-16 pt-16 sm:pb-24 sm:pt-24">
           <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
             <div>
@@ -146,9 +146,8 @@ export default async function LandingPage() {
                 </span>
               </Reveal>
               <Reveal delay={60}>
-                <h1 className="mt-6 font-display text-[2.9rem] font-bold leading-[0.98] tracking-[-0.03em] text-white sm:text-6xl xl:text-[4.7rem]">
-                  {t(lang, "heroTitle1")}
-                  <br />
+                <h1 className="mt-6 max-w-2xl font-display text-[2.6rem] font-bold leading-[1.02] tracking-[-0.03em] text-white sm:text-5xl xl:text-[4.15rem]">
+                  {t(lang, "heroTitle1")}{" "}
                   <span className="text-gradient-brand">{t(lang, "heroTitle2")}</span>
                 </h1>
               </Reveal>
@@ -192,18 +191,27 @@ export default async function LandingPage() {
 
             <Reveal delay={160} className="relative">
               <div className="relative mx-auto max-w-[560px]">
-                <div className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-tr from-brand-500/20 via-transparent to-cyan-400/15 blur-2xl" />
-                <div className="relative animate-float-slow overflow-hidden rounded-[2rem] border border-white/10 shadow-panel">
-                  <HeroQueueScene className="h-auto w-full" />
+                <div className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-tr from-brand-300/40 via-transparent to-brand-100/40 blur-2xl" />
+                <div className="relative animate-float-slow overflow-hidden rounded-[2rem] border border-brand-300/40 bg-ink-900 shadow-panel">
+                  <Image
+                    src="/queue-hero.jpeg"
+                    alt="People waiting comfortably while their turns are managed on a phone"
+                    width={1511}
+                    height={1041}
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 560px"
+                    className="h-auto w-full object-cover"
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-900/10 via-transparent to-transparent" />
                 </div>
-                <div className="absolute -left-4 bottom-8 hidden rounded-2xl border border-white/10 bg-ink-900/95 px-4 py-3 shadow-panel backdrop-blur-xl sm:block">
+                <div className="absolute -left-4 bottom-8 hidden rounded-2xl border border-white/10 bg-ink-900 px-4 py-3 shadow-panel sm:block">
                   <p className="text-[10px] uppercase tracking-[0.14em] text-slate-500">Average wait shared</p>
                   <p className="mt-1 font-display text-xl font-bold text-white">
                     {avgWaitValue !== null ? `${avgWaitValue} min` : "—"}
                   </p>
                   <p className="text-[10px] text-slate-500">last 30 days · recorded visits</p>
                 </div>
-                <div className="absolute -right-3 top-10 hidden items-center gap-2.5 rounded-2xl border border-emerald-400/20 bg-ink-900/95 px-4 py-3 shadow-panel backdrop-blur-xl sm:flex">
+                <div className="absolute -right-3 top-10 hidden items-center gap-2.5 rounded-2xl border border-emerald-400/20 bg-ink-900 px-4 py-3 shadow-panel sm:flex">
                   <span className="grid h-8 w-8 place-items-center rounded-full bg-emerald-500/15 text-emerald-300">
                     <CheckCircle2 className="h-4 w-4" />
                   </span>
@@ -217,7 +225,7 @@ export default async function LandingPage() {
           </div>
 
           <Reveal delay={120}>
-            <div className="mt-16 grid gap-3 rounded-3xl border border-white/[0.07] bg-white/[0.025] p-3 backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-16 grid gap-3 rounded-3xl border border-white/10 bg-ink-900 p-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 { value: `${orgs?.c ?? 0}`, label: "Partner service centres" },
                 { value: `${completed?.c ?? 0}`, label: "Recorded service visits" },
@@ -226,7 +234,7 @@ export default async function LandingPage() {
               ].map((item, index) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border border-white/[0.06] bg-ink-900/40 px-5 py-4"
+                    className="rounded-2xl border border-brand-500/10 bg-ink-850/70 px-5 py-4"
                   style={{ animationDelay: `${index * 80}ms` }}
                 >
                   <p className="font-display text-2xl font-bold text-white">{item.value}</p>
@@ -238,7 +246,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <section className="section relative border-t border-white/[0.05]">
+      <section className="section relative border-t border-brand-500/10">
         <div className="container-shell grid items-center gap-12 lg:grid-cols-2">
           <Reveal className="order-2 lg:order-1">
             <div className="relative">
@@ -261,7 +269,7 @@ export default async function LandingPage() {
                 ["No reliable estimate", "Waiting rooms give no signal about when your turn will come."],
                 ["Wasted hours", "People miss work, school and family time simply waiting."],
               ].map(([title, body]) => (
-                <div key={title} className="flex gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+                <div key={title} className="flex gap-3 rounded-2xl border border-brand-500/10 bg-white/[0.025] p-4">
                   <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-rose-500/10 text-rose-300">
                     <Clock3 className="h-3.5 w-3.5" />
                   </span>
@@ -276,7 +284,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <section className="section relative border-t border-white/[0.05]">
+      <section className="section relative border-t border-brand-500/10">
         <div className="container-shell grid items-center gap-12 lg:grid-cols-2">
           <Reveal>
             <span className="eyebrow border-emerald-400/25 bg-emerald-500/10 text-emerald-200">
@@ -319,7 +327,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <section id="features" className="section relative border-t border-white/[0.05]">
+      <section id="features" className="section relative border-t border-brand-500/10">
         <div className="container-shell">
           <Reveal>
             <SectionHeading
@@ -335,11 +343,11 @@ export default async function LandingPage() {
               return (
                 <Reveal key={feature.title} delay={index * 45} className={feature.span}>
                   <article className="glass-panel glass-hover group flex h-full flex-col overflow-hidden">
-                    <div className="relative h-48 overflow-hidden border-b border-white/[0.06] sm:h-52">
+                    <div className="relative h-48 overflow-hidden border-b border-brand-500/10 sm:h-52">
                       <div className="absolute inset-0 scale-[1.02] transition duration-500 group-hover:scale-[1.06]">
                         {feature.scene}
                       </div>
-                      <span className="absolute left-4 top-4 rounded-full border border-white/10 bg-ink-950/70 px-2.5 py-1 text-[10px] font-medium text-slate-300 backdrop-blur">
+                      <span className="absolute left-4 top-4 rounded-full border border-white/10 bg-ink-950 px-2.5 py-1 text-[10px] font-medium text-slate-300">
                         {feature.badge}
                       </span>
                     </div>
@@ -360,7 +368,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <section id="how-it-works" className="section relative border-t border-white/[0.05]">
+      <section id="how-it-works" className="section relative border-t border-brand-500/10">
         <div className="container-shell">
           <Reveal>
             <SectionHeading
@@ -376,9 +384,9 @@ export default async function LandingPage() {
               return (
                 <Reveal key={step.title} delay={index * 70}>
                   <div className="glass-panel glass-hover relative h-full overflow-hidden">
-                    <div className="relative h-40 overflow-hidden border-b border-white/[0.06]">
+                    <div className="relative h-40 overflow-hidden border-b border-brand-500/10">
                       {step.scene}
-                      <span className="absolute left-3 top-3 grid h-7 w-7 place-items-center rounded-full border border-white/15 bg-ink-950/80 text-[11px] font-bold text-white backdrop-blur">
+                      <span className="absolute left-3 top-3 grid h-7 w-7 place-items-center rounded-full border border-white/15 bg-ink-950 text-[11px] font-bold text-white">
                         0{index + 1}
                       </span>
                     </div>
@@ -397,7 +405,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <section className="section relative border-t border-white/[0.05]">
+      <section className="section relative border-t border-brand-500/10">
         <div className="container-shell grid items-center gap-12 lg:grid-cols-[1fr_0.9fr]">
           <Reveal>
             <span className="eyebrow border-rose-400/25 bg-rose-500/10 text-rose-200">
@@ -438,7 +446,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <section className="section relative border-t border-white/[0.05]">
+      <section className="section relative border-t border-brand-500/10">
         <div className="container-shell">
           <Reveal>
             <SectionHeading
@@ -482,10 +490,10 @@ export default async function LandingPage() {
                     href={role.href}
                     className="group glass-panel glass-hover flex h-full flex-col overflow-hidden"
                   >
-                    <div className="relative h-36 overflow-hidden border-b border-white/[0.06]">
+                    <div className="relative h-36 overflow-hidden border-b border-brand-500/10">
                       <div className={`absolute inset-0 bg-gradient-to-br ${role.tone} to-transparent`} />
                       <div className="absolute inset-0 opacity-80 transition group-hover:opacity-100">{role.image}</div>
-                      <span className="absolute left-4 top-4 grid h-9 w-9 place-items-center rounded-xl border border-white/15 bg-ink-950/75 text-white backdrop-blur">
+                      <span className="absolute left-4 top-4 grid h-9 w-9 place-items-center rounded-xl border border-white/15 bg-ink-950 text-white">
                         <Icon className="h-4 w-4" />
                       </span>
                     </div>

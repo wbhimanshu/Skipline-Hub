@@ -74,7 +74,7 @@ export default async function LoginRolePage() {
                 <div className="relative h-44 overflow-hidden border-b border-white/[0.06] sm:h-48">
                   <div className={`absolute inset-0 bg-gradient-to-br ${role.tone} to-transparent opacity-60`} />
                   <div className="absolute inset-0 transition duration-500 group-hover:scale-[1.04]">{role.image}</div>
-                  <span className="absolute left-4 top-4 grid h-9 w-9 place-items-center rounded-xl border border-white/15 bg-ink-950/75 text-white backdrop-blur">
+                  <span className="absolute left-4 top-4 grid h-9 w-9 place-items-center rounded-xl border border-white/15 bg-ink-950 text-white">
                     <Icon className="h-4 w-4" />
                   </span>
                 </div>

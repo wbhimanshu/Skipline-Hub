@@ -49,7 +49,7 @@ export function SiteHeader({ user }: { user: HeaderUser }) {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-ink-950/70 backdrop-blur-2xl">
+    <header className="sticky top-0 z-50 border-b border-brand-500/10 bg-ink-950/85 backdrop-blur-md">
       <div className="container-shell flex h-[68px] items-center justify-between gap-4">
         <Logo />
 
@@ -113,7 +113,7 @@ export function SiteHeader({ user }: { user: HeaderUser }) {
       <div
         id="mobile-menu"
         className={cn(
-          "overflow-hidden border-t border-white/[0.06] bg-ink-950/95 backdrop-blur-xl transition-all duration-300 lg:hidden",
+          "overflow-hidden border-t border-brand-500/10 bg-ink-950 transition-all duration-300 lg:hidden",
           open ? "max-h-[520px] opacity-100" : "max-h-0 opacity-0",
         )}
       >

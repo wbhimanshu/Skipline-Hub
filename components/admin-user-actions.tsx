@@ -88,7 +88,7 @@ export function AdminUserActions({
         <div className="fixed inset-0 z-[90] grid place-items-center p-4">
           <button
             type="button"
-            className="absolute inset-0 bg-ink-950/75 backdrop-blur-sm"
+            className="absolute inset-0 bg-brand-900/50 backdrop-blur-sm"
             onClick={() => setDialog(false)}
             aria-label="Close dialog"
           />

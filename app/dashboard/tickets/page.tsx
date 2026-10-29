@@ -81,7 +81,7 @@ export default async function TicketsPage({
             className={cn(
               "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition",
               filter === item.key
-                ? "border-brand-400/40 bg-brand-500/15 text-brand-100"
+                ? "border-brand-400/40 bg-brand-500/15 text-brand-700"
                 : "border-white/10 bg-white/[0.03] text-slate-400 hover:text-white",
             )}
           >

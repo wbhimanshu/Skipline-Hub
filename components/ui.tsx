@@ -164,10 +164,10 @@ export function Avatar({
   tone?: "brand" | "cyan" | "emerald" | "rose";
 }) {
   const tones = {
-    brand: "from-brand-500/30 to-brand-700/30 text-brand-100 border-brand-400/25",
-    cyan: "from-cyan-500/30 to-cyan-700/30 text-cyan-100 border-cyan-400/25",
-    emerald: "from-emerald-500/30 to-emerald-700/30 text-emerald-100 border-emerald-400/25",
-    rose: "from-rose-500/30 to-rose-700/30 text-rose-100 border-rose-400/25",
+    brand: "from-brand-500/30 to-brand-700/30 text-brand-900 border-brand-400/25",
+    cyan: "from-cyan-500/30 to-cyan-700/30 text-cyan-200 border-cyan-400/25",
+    emerald: "from-emerald-500/30 to-emerald-700/30 text-emerald-200 border-emerald-400/25",
+    rose: "from-rose-500/30 to-rose-700/30 text-rose-200 border-rose-400/25",
   };
   return (
     <span
@@ -206,7 +206,7 @@ export function QueueRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="rgba(255,255,255,0.08)"
+          stroke="rgba(101,69,47,0.12)"
           strokeWidth="9"
         />
         <circle
@@ -222,8 +222,8 @@ export function QueueRing({
         />
         <defs>
           <linearGradient id="ring-gradient" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#8b6cfb" />
-            <stop offset="1" stopColor="#22d3ee" />
+            <stop offset="0" stopColor="#65452F" />
+            <stop offset="1" stopColor="#C7A46A" />
           </linearGradient>
         </defs>
       </svg>

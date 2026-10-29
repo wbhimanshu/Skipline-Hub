@@ -148,7 +148,7 @@ function ToastCard({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   return (
     <div
       role="status"
-      className="pointer-events-auto w-full animate-fade-up rounded-2xl border border-white/10 bg-ink-900/95 p-4 shadow-panel backdrop-blur-xl"
+      className="pointer-events-auto w-full animate-fade-up rounded-2xl border border-white/10 bg-ink-900 p-4 shadow-panel"
     >
       <div className="flex items-start gap-3">
         <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-xl border ${tone}`}>

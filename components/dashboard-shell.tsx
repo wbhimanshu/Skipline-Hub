@@ -30,6 +30,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Avatar } from "@/components/ui";
+import { Logo } from "@/components/logo";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useToast } from "@/components/providers";
 import { cn } from "@/lib/utils";
@@ -123,14 +124,7 @@ export function DashboardShell({
 
   const sidebar = (
     <div className="flex h-full flex-col">
-      <Link href="/" className="flex items-center gap-2.5 px-2 py-1">
-        <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-cyan-400 text-sm font-black text-white shadow-glow">
-          S
-        </span>
-        <span className="font-display text-sm font-bold tracking-tight text-white">
-          Skipline<span className="text-brand-300">Hub</span>
-        </span>
-      </Link>
+      <Logo href="/" className="px-2 py-1" />
 
       <div className={cn("mt-5 flex items-center gap-2 rounded-xl border px-3 py-2 text-[11px] font-semibold", portal.tone)}>
         {role === "admin" ? <ShieldCheck className="h-3.5 w-3.5" /> : role === "org" ? <Activity className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
@@ -150,7 +144,7 @@ export function DashboardShell({
               <Icon className="h-4 w-4 shrink-0" />
               <span className="flex-1">{item.label}</span>
               {item.href.endsWith("/notifications") && unread > 0 ? (
-                <span className="grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                <span className="grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-cream">
                   {unread > 9 ? "9+" : unread}
                 </span>
               ) : null}
@@ -183,12 +177,12 @@ export function DashboardShell({
 
   return (
     <div className="min-h-screen">
-      <div className="fixed inset-y-0 left-0 z-40 hidden w-[248px] border-r border-white/[0.06] bg-ink-950/80 px-3 py-4 backdrop-blur-xl lg:flex lg:flex-col">
+      <div className="fixed inset-y-0 left-0 z-40 hidden w-[248px] border-r border-white/[0.06] bg-ink-950 px-3 py-4 lg:flex lg:flex-col">
         {sidebar}
       </div>
 
       <div className="lg:pl-[248px]">
-        <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-ink-950/80 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 border-b border-brand-500/10 bg-ink-950/90 backdrop-blur-md">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
             <button
               type="button"
@@ -211,7 +205,7 @@ export function DashboardShell({
             >
               <Bell className="h-4 w-4" />
               {unread > 0 ? (
-                <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-0.5 text-[9px] font-bold text-white">
+                <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-0.5 text-[9px] font-bold text-cream">
                   {unread > 9 ? "9+" : unread}
                 </span>
               ) : null}
@@ -237,7 +231,7 @@ export function DashboardShell({
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-ink-950/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-brand-900/50 backdrop-blur-sm"
             onClick={() => setOpen(false)}
             aria-label="Close navigation"
           />

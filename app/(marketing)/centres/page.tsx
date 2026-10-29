@@ -92,7 +92,7 @@ export default async function CentresPage({
         <div>
           <span className="eyebrow">
             <MapPin className="h-3.5 w-3.5" />
-            Pune · {centres.length} approved centres
+            {query.lat && query.lng ? "Near your location" : "Bhopal"} · {centres.length} approved centres
           </span>
           <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
             {t(lang, "findCentre")}
@@ -154,7 +154,7 @@ export default async function CentresPage({
           className={cn(
             "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition",
             !query.category || query.category === "all"
-              ? "border-brand-400/40 bg-brand-500/15 text-brand-100"
+              ? "border-brand-400/40 bg-brand-500/15 text-brand-700"
               : "border-white/10 bg-white/[0.03] text-slate-400 hover:text-white",
           )}
         >
@@ -167,7 +167,7 @@ export default async function CentresPage({
             className={cn(
               "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition",
               query.category === category.value
-                ? "border-brand-400/40 bg-brand-500/15 text-brand-100"
+                ? "border-brand-400/40 bg-brand-500/15 text-brand-700"
                 : "border-white/10 bg-white/[0.03] text-slate-400 hover:text-white",
             )}
           >

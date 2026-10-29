@@ -150,7 +150,7 @@ export function ScanCheckin() {
 
         <div className="mt-5">
           {camera ? (
-            <div className="relative overflow-hidden rounded-2xl border border-cyan-400/25 bg-black">
+            <div className="relative overflow-hidden rounded-2xl border border-cyan-400/25 bg-brand-900">
               <video ref={videoRef} muted playsInline className="aspect-video w-full object-cover" />
               <div className="pointer-events-none absolute inset-0 grid place-items-center">
                 <div className="h-40 w-40 rounded-2xl border-2 border-cyan-300/80 shadow-[0_0_0_9999px_rgba(6,10,24,0.55)]" />
