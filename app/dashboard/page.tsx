@@ -39,10 +39,11 @@ export const metadata = { title: "Your dashboard" };
 
 export default async function DashboardPage() {
   const user = await requireRole("user");
-  const active = getActiveTicketsFor(user.id).map(viewTicket);
-  const history = getUserTickets(user.id, 6);
-  const allTickets = getUserTickets(user.id, 500);
-  const notifications = all<{
+  const activeTickets = await getActiveTicketsFor(user.id);
+  const active = await Promise.all(activeTickets.map(viewTicket));
+  const history = await getUserTickets(user.id, 6);
+  const allTickets = await getUserTickets(user.id, 500);
+  const notifications = await all<{
     id: string;
     title: string;
     body: string;
@@ -54,14 +55,14 @@ export default async function DashboardPage() {
     "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 4",
     user.id,
   );
-  const restriction = getActiveRestriction(user.id);
+  const restriction = await getActiveRestriction(user.id);
   const appeal = restriction
-    ? one<{ id: string; status: string }>(
+    ? await one<{ id: string; status: string }>(
         "SELECT id, status FROM appeals WHERE restriction_id = ? ORDER BY created_at DESC LIMIT 1",
         restriction.id,
       )
     : null;
-  const cancellation = cancellationStats(user.id);
+  const cancellation = await cancellationStats(user.id);
   const completed = allTickets.filter((ticket) => ticket.status === "completed").length;
   const cancelled = allTickets.filter((ticket) => ticket.status === "cancelled").length;
   const activeAppointment = active.find((ticket) => ticket.kind === "appointment");

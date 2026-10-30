@@ -12,7 +12,7 @@ export async function GET(
   const auth = await requireApi();
   if (auth.response) return auth.response;
   const { id } = await params;
-  const ticket = getTicket(id);
+  const ticket = await getTicket(id);
   if (!ticket) return jsonError("Ticket not found.", 404);
   const user = auth.user;
   const canView =

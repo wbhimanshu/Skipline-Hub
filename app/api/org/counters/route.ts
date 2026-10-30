@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   const parsed = await parseBody(req, counterSchema);
   if (parsed.error) return parsed.error;
   try {
-    const count = one<{ c: number }>(
+    const count = await one<{ c: number }>(
       "SELECT COUNT(*) AS c FROM counters WHERE org_id = ?",
       auth.user.org_id!,
     );
@@ -32,14 +32,14 @@ export async function POST(req: NextRequest) {
       return jsonError("A maximum of 20 counters is allowed.", 400);
     }
     const id = randomId("ctr_");
-    run(
+    await run(
       "INSERT INTO counters (id, org_id, name, is_active, created_at) VALUES (?, ?, ?, 1, ?)",
       id,
       auth.user.org_id!,
       parsed.data.name,
       nowIso(),
     );
-    logAudit({
+    await logAudit({
       actorId: auth.user.id,
       actorRole: "org",
       orgId: auth.user.org_id,

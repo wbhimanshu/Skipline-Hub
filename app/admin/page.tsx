@@ -23,10 +23,10 @@ export const metadata = { title: "Admin overview" };
 
 export default async function AdminOverviewPage() {
   const user = await requireRole("admin");
-  const analytics = adminAnalytics();
-  const counts = adminCounts();
-  const settings = fairnessSettings();
-  const recentAudit = adminAuditLogs(8);
+  const analytics = await adminAnalytics();
+  const counts = await adminCounts();
+  const settings = await fairnessSettings();
+  const recentAudit = await adminAuditLogs(8);
 
   return (
     <div className="space-y-6">
@@ -114,7 +114,7 @@ export default async function AdminOverviewPage() {
           <div className="card">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-base font-semibold text-white">Busiest centres</h2>
-              <Link href="/admin/organisations" className="text-[11px] font-semibold text-brand-300">All</Link>
+              <Link href="/admin/organisations" className="text-[11px] font-semibold text-brand-300">await all</Link>
             </div>
             <div className="mt-3 space-y-2">
               {analytics.topOrgs.length === 0 ? (

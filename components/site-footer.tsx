@@ -1,12 +1,22 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Logo } from "./logo";
+import { ArrowUp } from "lucide-react";
 
 export function SiteFooter() {
   return (
-    <footer className="relative mt-10 border-t border-brand-500/10 bg-ink-800/40">
+    <footer className="relative mt-10 overflow-hidden border-t border-brand-500/10 bg-ink-800/40">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-400/50 to-transparent" />
       <div className="container-shell grid gap-10 py-14 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
-          <Logo />
+          <Link href="/" className="group inline-flex" aria-label="Skipline Hub home">
+            <Image
+              src="/logo-lockup-dark.png"
+              alt="Skipline Hub"
+              width={879}
+              height={483}
+              className="h-16 w-auto transition-transform duration-500 ease-out group-hover:scale-[1.02]"
+            />
+          </Link>
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-500">
             Smarter queues, fairer service. Find, join, track and complete visits
             without losing your day to a waiting room.
@@ -47,7 +57,16 @@ export function SiteFooter() {
       <div className="border-t border-white/[0.05]">
         <div className="container-shell flex flex-col items-center justify-between gap-3 py-5 text-xs text-slate-600 sm:flex-row">
           <p>© {new Date().getFullYear()} Skipline Hub. All rights reserved.</p>
-          <p>Less waiting. More living.</p>
+          <div className="flex items-center gap-4">
+            <p className="hidden sm:block">Less waiting. More living.</p>
+            <a
+              href="#main-content"
+              className="group inline-flex items-center gap-1.5 font-medium text-slate-500 transition-colors duration-300 hover:text-brand-700"
+            >
+              Back to top
+              <ArrowUp className="h-3.5 w-3.5 transition-transform duration-300 ease-out group-hover:-translate-y-0.5" />
+            </a>
+          </div>
         </div>
       </div>
     </footer>

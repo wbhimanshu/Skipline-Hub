@@ -18,7 +18,6 @@ import {
   EyeOff,
   KeyRound,
   Loader2,
-  LocateFixed,
   Lock,
   Mail,
   MailCheck,
@@ -30,6 +29,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useLanguage, useToast } from "@/components/providers";
+import { AddressPicker } from "@/components/address-picker";
 import { cn } from "@/lib/utils";
 
 type FieldErrors = Record<string, string>;
@@ -587,32 +587,10 @@ export function OrgRegisterForm() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [geolocating, setGeolocating] = useState(false);
   const [success, setSuccess] = useState<{ devLink?: string } | null>(null);
 
   function update(key: keyof typeof values, value: string) {
     setValues((prev) => ({ ...prev, [key]: value }));
-  }
-
-  function locate() {
-    if (!navigator.geolocation) {
-      push("info", "Geolocation is not available in this browser. Enter coordinates manually.");
-      return;
-    }
-    setGeolocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        update("lat", position.coords.latitude.toFixed(6));
-        update("lng", position.coords.longitude.toFixed(6));
-        setGeolocating(false);
-        push("success", "Location coordinates captured.");
-      },
-      () => {
-        setGeolocating(false);
-        push("error", "Could not access your location. Enter coordinates manually.");
-      },
-      { enableHighAccuracy: false, timeout: 8000 },
-    );
   }
 
   async function submit(event: FormEvent) {
@@ -747,28 +725,18 @@ export function OrgRegisterForm() {
         <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-cyan-200">
           <MapPin className="h-3.5 w-3.5" /> Location & hours
         </p>
-        <Field label="Street address" htmlFor="address" error={errors.address}>
-          <InputWithIcon
-            icon={MapPin}
-            id="address"
-            value={values.address}
-            onChange={(event) => update("address", event.target.value)}
-            placeholder="12, FC Road, Shivajinagar"
-            aria-invalid={Boolean(errors.address)}
-            required
-          />
-        </Field>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="City" htmlFor="city" error={errors.city}>
-            <input id="city" className="input" value={values.city} onChange={(event) => update("city", event.target.value)} required />
-          </Field>
-          <Field label="State" htmlFor="state" error={errors.state}>
-            <input id="state" className="input" value={values.state} onChange={(event) => update("state", event.target.value)} />
-          </Field>
-          <Field label="Pincode" htmlFor="pincode" error={errors.pincode}>
-            <input id="pincode" className="input" value={values.pincode} onChange={(event) => update("pincode", event.target.value)} required />
-          </Field>
-        </div>
+        <AddressPicker
+          values={{
+            address: values.address,
+            city: values.city,
+            state: values.state,
+            pincode: values.pincode,
+            lat: values.lat,
+            lng: values.lng,
+          }}
+          errors={errors}
+          onChange={(patch) => setValues((prev) => ({ ...prev, ...patch }))}
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Contact phone" htmlFor="phone" error={errors.phone}>
             <InputWithIcon
@@ -804,22 +772,6 @@ export function OrgRegisterForm() {
             </div>
           </Field>
         </div>
-        <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-          <Field label="Latitude" htmlFor="lat" error={errors.lat}>
-            <input id="lat" className="input" value={values.lat} onChange={(event) => update("lat", event.target.value)} inputMode="decimal" required />
-          </Field>
-          <Field label="Longitude" htmlFor="lng" error={errors.lng}>
-            <input id="lng" className="input" value={values.lng} onChange={(event) => update("lng", event.target.value)} inputMode="decimal" required />
-          </Field>
-          <button type="button" onClick={locate} className="btn-secondary mb-0.5 whitespace-nowrap" disabled={geolocating}>
-            {geolocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
-            Use current location
-          </button>
-        </div>
-        <p className="text-[11px] leading-relaxed text-slate-500">
-          Coordinates place your centre on the comparison map. In production, connect a
-          geocoding provider to populate these automatically.
-        </p>
       </div>
 
       <div className="space-y-4 border-t border-white/[0.07] pt-5">

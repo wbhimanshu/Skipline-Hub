@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const parsed = await parseBody(req, channelSchema);
   if (parsed.error) return parsed.error;
   const { id } = await params;
-  const org = one<{
+  const org = await one<{
     id: string;
     name: string;
     status: string;
@@ -69,7 +69,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         ? "Suspension lifted after platform review."
         : "");
 
-  run(
+  await run(
     `UPDATE organizations SET status = ?, status_reason = ?,
        approved_at = CASE WHEN ? IS NOT NULL THEN COALESCE(approved_at, ?) ELSE approved_at END
      WHERE id = ?`,
@@ -87,7 +87,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         : status === "suspended"
           ? `${org.name} has been suspended`
           : `${org.name} application was not approved`;
-    notify({
+    await notify({
       userId: org.owner_user_id,
       type: "organisation",
       title,
@@ -98,7 +98,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     });
   }
 
-  logAudit({
+  await logAudit({
     actorId: auth.user.id,
     actorRole: "admin",
     orgId: org.id,

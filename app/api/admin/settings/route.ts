@@ -22,11 +22,11 @@ export async function PATCH(req: NextRequest) {
   if (parsed.error) return parsed.error;
   const { thresholdCount, windowDays, restrictionDays } = parsed.data;
 
-  setSetting("cancellation_threshold_count", String(thresholdCount));
-  setSetting("cancellation_window_days", String(windowDays));
-  setSetting("restriction_days", String(restrictionDays));
+  await setSetting("cancellation_threshold_count", String(thresholdCount));
+  await setSetting("cancellation_window_days", String(windowDays));
+  await setSetting("restriction_days", String(restrictionDays));
 
-  logAudit({
+  await logAudit({
     actorId: auth.user.id,
     actorRole: "admin",
     action: "settings.fairness_updated",

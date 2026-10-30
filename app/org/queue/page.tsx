@@ -19,9 +19,9 @@ export const metadata = { title: "Live queue" };
 export default async function OrgQueuePage() {
   const user = await requireOrgStaff();
   const orgId = user.org_id!;
-  const counters = orgCounters(orgId);
-  const queue = orgQueue(orgId);
-  const prediction = predictionForOrg(orgId);
+  const counters = await orgCounters(orgId);
+  const queue = await orgQueue(orgId);
+  const prediction = await predictionForOrg(orgId);
   const activeCounters = counters.filter((counter) => Boolean(counter.is_active));
 
   return (

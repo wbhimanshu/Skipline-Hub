@@ -41,7 +41,7 @@ export async function PATCH(
   const ip = clientIp(req);
   try {
     if (parsed.data.action === "status") {
-      const result = updateTicketStatus({
+      const result = await updateTicketStatus({
         ticketId: id,
         orgId: auth.user.org_id!,
         actorId: auth.user.id,
@@ -51,7 +51,7 @@ export async function PATCH(
       });
       return jsonOk(result);
     }
-    const result = setPriority({
+    const result = await setPriority({
       ticketId: id,
       orgId: auth.user.org_id!,
       actorId: auth.user.id,

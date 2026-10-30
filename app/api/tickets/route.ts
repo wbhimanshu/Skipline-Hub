@@ -1,4 +1,4 @@
-﻿import { NextRequest } from "next/server";
+import { NextRequest } from "next/server";
 import { createTicket } from "@/lib/queue";
 import {
   clientIp,
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
         403,
       );
     }
-    const result = createTicket({
+    const result = await createTicket({
       orgId: input.orgId,
       userId: user.id,
       kind: input.kind,

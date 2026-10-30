@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const parsed = await parseBody(req, resetSchema);
   if (parsed.error) return parsed.error;
 
-  const user = one<{
+  const user = await one<{
     id: string;
     role: string;
     org_id: string | null;
@@ -42,14 +42,14 @@ export async function POST(req: NextRequest) {
   }
 
   const passwordHash = await hashPassword(parsed.data.password);
-  run(
+  await run(
     `UPDATE users SET password_hash = ?, reset_token = NULL, reset_expires_at = NULL
      WHERE id = ?`,
     passwordHash,
     user.id,
   );
-  run("DELETE FROM sessions WHERE user_id = ?", user.id);
-  logAudit({
+  await run("DELETE FROM sessions WHERE user_id = ?", user.id);
+  await logAudit({
     actorId: user.id,
     actorRole: user.role,
     orgId: user.org_id,

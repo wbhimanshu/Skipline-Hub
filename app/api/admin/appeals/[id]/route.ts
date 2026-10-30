@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const parsed = await parseBody(req, appealDecisionSchema);
   if (parsed.error) return parsed.error;
   const { id } = await params;
-  const appeal = one<{
+  const appeal = await one<{
     id: string;
     user_id: string;
     restriction_id: string;
@@ -39,7 +39,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const { decision, note } = parsed.data;
   if (decision === "accepted") {
-    run(
+    await run(
       `UPDATE appeals SET status = 'accepted', admin_note = ?, resolved_at = ?, resolved_by = ?
        WHERE id = ?`,
       note,
@@ -47,25 +47,25 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       auth.user.id,
       appeal.id,
     );
-    run(
+    await run(
       `UPDATE restrictions SET status = 'reversed', reversed_by = ?, reversed_at = ?
        WHERE id = ?`,
       auth.user.id,
       nowIso(),
       appeal.restriction_id,
     );
-    run(
+    await run(
       "UPDATE users SET restricted_until = NULL, restriction_reason = NULL WHERE id = ?",
       appeal.user_id,
     );
-    notify({
+    await notify({
       userId: appeal.user_id,
       type: "appeal",
       title: "Appeal accepted",
       body: `Your appeal was accepted and booking access has been restored.${note ? ` Note: ${note}` : ""}`,
     });
   } else {
-    run(
+    await run(
       `UPDATE appeals SET status = 'rejected', admin_note = ?, resolved_at = ?, resolved_by = ?
        WHERE id = ?`,
       note,
@@ -73,7 +73,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       auth.user.id,
       appeal.id,
     );
-    notify({
+    await notify({
       userId: appeal.user_id,
       type: "appeal",
       title: "Appeal reviewed",
@@ -81,7 +81,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     });
   }
 
-  logAudit({
+  await logAudit({
     actorId: auth.user.id,
     actorRole: "admin",
     action: `appeal.${decision}`,

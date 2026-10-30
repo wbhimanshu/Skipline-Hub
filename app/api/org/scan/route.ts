@@ -34,16 +34,16 @@ export async function POST(req: NextRequest) {
 
   try {
     const code = parsed.data.code;
-    let ticket = code.startsWith("SKIPLINE|") ? verifyQrPayload(code) : undefined;
+    let ticket = code.startsWith("SKIPLINE|") ? await verifyQrPayload(code) : undefined;
     if (!ticket) {
       const token = code.toUpperCase().trim();
-      const row = one<{ id: string }>(
+      const row = await one<{ id: string }>(
         `SELECT id FROM tickets WHERE org_id = ? AND queue_date = ? AND upper(token_no) = ?`,
         orgId,
         todayKey(),
         token,
       );
-      ticket = row ? getTicket(row.id) : undefined;
+      ticket = row ? await getTicket(row.id) : undefined;
     }
     if (!ticket || ticket.org_id !== orgId) {
       return jsonError("Token not found for this organisation.", 404);
@@ -60,22 +60,22 @@ export async function POST(req: NextRequest) {
       if (diff < -90 * 60_000) {
         return jsonError("Check-in opens 90 minutes before the appointment.", 400);
       }
-      withTransaction(() => {
-        run(
+      await withTransaction(async () => {
+        await run(
           `UPDATE tickets SET status = 'waiting', checked_in_at = ?, updated_at = ?
            WHERE id = ? AND status = 'booked'`,
           nowIso(),
           nowIso(),
           ticket!.id,
         );
-        notify({
+        await notify({
           userId: ticket!.user_id,
           type: "checkin",
           title: "Checked in by staff",
           body: `Token ${ticket!.token_no} was checked in at ${ticket!.org_name}. You are now in the live queue.`,
           ticketId: ticket!.id,
         });
-        logAudit({
+        await logAudit({
           actorId: auth.user.id,
           actorRole: "org",
           orgId,
@@ -89,8 +89,8 @@ export async function POST(req: NextRequest) {
       checkedIn = true;
     }
 
-    const fresh = getTicket(ticket.id)!;
-    logAudit({
+    const fresh = (await getTicket(ticket.id))!;
+    await logAudit({
       actorId: auth.user.id,
       actorRole: "org",
       orgId,
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
       details: { token: ticket.token_no, checkedIn },
       ip,
     });
-    return jsonOk({ ticket: viewTicket(fresh), checkedIn });
+    return jsonOk({ ticket: await viewTicket(fresh), checkedIn });
   } catch (error) {
     return handleApiError(error);
   }

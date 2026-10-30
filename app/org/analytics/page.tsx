@@ -20,7 +20,7 @@ export const metadata = { title: "Analytics" };
 
 export default async function OrgAnalyticsPage() {
   const user = await requireOrgStaff();
-  const data = orgAnalytics(user.org_id!);
+  const data = await orgAnalytics(user.org_id!);
 
   return (
     <div className="space-y-6">

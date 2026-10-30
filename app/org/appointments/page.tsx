@@ -11,7 +11,7 @@ export const metadata = { title: "Appointments" };
 
 export default async function OrgAppointmentsPage() {
   const user = await requireOrgStaff();
-  const appointments = orgAppointments(user.org_id!);
+  const appointments = await orgAppointments(user.org_id!);
   const active = appointments.filter((ticket) =>
     ["booked", "waiting", "serving"].includes(ticket.status),
   );

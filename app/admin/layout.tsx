@@ -10,7 +10,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const user = await requireRole("admin");
-  const unread = one<{ c: number }>(
+  const unread = await one<{ c: number }>(
     "SELECT COUNT(*) AS c FROM notifications WHERE user_id = ? AND read_at IS NULL",
     user.id,
   );

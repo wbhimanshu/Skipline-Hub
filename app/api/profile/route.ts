@@ -22,13 +22,13 @@ export async function PATCH(req: NextRequest) {
   const parsed = await parseBody(req, profileSchema);
   if (parsed.error) return parsed.error;
   try {
-    run(
+    await run(
       "UPDATE users SET name = ?, phone = ? WHERE id = ?",
       parsed.data.name,
       parsed.data.phone ?? "",
       auth.user.id,
     );
-    logAudit({
+    await logAudit({
       actorId: auth.user.id,
       actorRole: auth.user.role,
       orgId: auth.user.org_id,

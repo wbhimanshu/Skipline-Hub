@@ -22,7 +22,7 @@ export default async function TicketsPage({
   const user = await requireRole("user");
   const query = await searchParams;
   const filter = FILTERS.some((item) => item.key === query.status) ? query.status! : "all";
-  const tickets = getUserTickets(user.id, 500);
+  const tickets = await getUserTickets(user.id, 500);
   const filtered = tickets.filter((ticket) => {
     if (filter === "all") return true;
     if (filter === "active") return ["booked", "waiting", "serving"].includes(ticket.status);
@@ -30,6 +30,9 @@ export default async function TicketsPage({
     return ["cancelled", "no_show"].includes(ticket.status);
   });
   const active = tickets.filter((ticket) => ["booked", "waiting", "serving"].includes(ticket.status));
+  const activeViews = await Promise.all(
+    active.map(async (ticket) => ({ ticket, view: await viewTicket(ticket) })),
+  );
 
   return (
     <div className="space-y-6">
@@ -47,8 +50,7 @@ export default async function TicketsPage({
 
       {active.length > 0 ? (
         <div className="grid gap-3 md:grid-cols-2">
-          {active.map((ticket) => {
-            const view = viewTicket(ticket);
+          {activeViews.map(({ ticket, view }) => {
             return (
               <Link key={ticket.id} href={`/dashboard/tickets/${ticket.id}`} className="glass-panel glass-hover p-5">
                 <div className="flex items-start justify-between gap-3">

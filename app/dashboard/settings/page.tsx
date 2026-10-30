@@ -16,22 +16,22 @@ export const metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
   const user = await requireRole("user");
-  const profile = one<{ phone: string }>("SELECT phone FROM users WHERE id = ?", user.id);
-  const restriction = getActiveRestriction(user.id);
+  const profile = await one<{ phone: string }>("SELECT phone FROM users WHERE id = ?", user.id);
+  const restriction = await getActiveRestriction(user.id);
   const appeal = restriction
-    ? one<{ status: string }>(
+    ? await one<{ status: string }>(
         "SELECT status FROM appeals WHERE restriction_id = ? ORDER BY created_at DESC LIMIT 1",
         restriction.id,
       )
     : null;
-  const reports = all<{ id: string; subject: string; status: string; created_at: string }>(
+  const reports = await all<{ id: string; subject: string; status: string; created_at: string }>(
     "SELECT id, subject, status, created_at FROM reports WHERE user_id = ? ORDER BY created_at DESC LIMIT 5",
     user.id,
   );
-  const orgs = all<{ id: string; name: string }>(
+  const orgs = await all<{ id: string; name: string }>(
     "SELECT id, name FROM organizations WHERE status = 'approved' ORDER BY name",
   );
-  const stats = cancellationStats(user.id);
+  const stats = await cancellationStats(user.id);
 
   return (
     <div className="space-y-6">

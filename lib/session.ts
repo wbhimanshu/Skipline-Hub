@@ -24,6 +24,6 @@ export async function currentUserSafe(): Promise<SessionUser | null> {
   const token = jar.get(SESSION_COOKIE)?.value;
   if (!token) return null;
   return (
-    one<SessionUser>(SESSION_SELECT, tokenHash(token), nowIso()) ?? null
+    (await one<SessionUser>(SESSION_SELECT, tokenHash(token), nowIso())) ?? null
   );
 }

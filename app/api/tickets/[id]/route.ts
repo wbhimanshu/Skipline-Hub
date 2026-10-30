@@ -41,7 +41,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   if (auth.response) return auth.response;
   const { id } = await params;
   try {
-    const ticket = getTicket(id);
+    const ticket = await getTicket(id);
     if (!ticket) return jsonError("Ticket not found.", 404);
     const user = auth.user;
     const canView =
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       ticket.user_id === user.id ||
       (user.role === "org" && user.org_id === ticket.org_id);
     if (!canView) return jsonError("Ticket not found.", 404);
-    return jsonOk({ ticket: viewTicket(ticket) });
+    return jsonOk({ ticket: await viewTicket(ticket) });
   } catch (error) {
     return handleApiError(error);
   }
@@ -69,11 +69,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   try {
     if (input.action === "checkin") {
-      const result = checkInTicket({ ticketId: id, userId: user.id, ip });
+      const result = await checkInTicket({ ticketId: id, userId: user.id, ip });
       return jsonOk(result);
     }
     if (input.action === "emergency") {
-      const result = createEmergencyRequest({
+      const result = await createEmergencyRequest({
         ticketId: id,
         userId: user.id,
         reason: input.reason,
@@ -86,7 +86,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       });
     }
     if (user.role === "user") {
-      const result = cancelTicket({
+      const result = await cancelTicket({
         ticketId: id,
         actorId: user.id,
         actorRole: "user",
@@ -98,7 +98,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
     if (user.role === "org") {
       if (!user.org_id) return jsonError("Organisation not found.", 403);
-      const result = cancelTicket({
+      const result = await cancelTicket({
         ticketId: id,
         actorId: user.id,
         actorRole: "org",

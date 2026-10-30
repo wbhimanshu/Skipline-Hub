@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
   await destroySession();
   if (user) {
-    logAudit({
+    await logAudit({
       actorId: user.id,
       actorRole: user.role,
       orgId: user.org_id,

@@ -59,7 +59,7 @@ export type TicketView = Ticket & {
   position: number;
   ahead: number;
   prediction: Prediction;
-  estimate: ReturnType<typeof estimateForAhead>;
+  estimate: Awaited<ReturnType<typeof estimateForAhead>>;
   org: {
     id: string;
     name: string;
@@ -84,11 +84,11 @@ export const TICKET_JOIN_SELECT = `
   LEFT JOIN counters c ON c.id = t.counter_id
 `;
 
-export function getTicket(id: string): Ticket | undefined {
+export async function getTicket(id: string): Promise<Ticket | undefined> {
   return one<Ticket>(`${TICKET_JOIN_SELECT} WHERE t.id = ?`, id);
 }
 
-export function getActiveTicketFor(orgId: string, userId: string) {
+export async function getActiveTicketFor(orgId: string, userId: string) {
   return one<Ticket>(
     `${TICKET_JOIN_SELECT} WHERE t.org_id = ? AND t.user_id = ? AND t.status IN ('booked','waiting','serving')`,
     orgId,
@@ -96,14 +96,14 @@ export function getActiveTicketFor(orgId: string, userId: string) {
   );
 }
 
-export function getActiveTicketsFor(userId: string) {
+export async function getActiveTicketsFor(userId: string) {
   return all<Ticket>(
     `${TICKET_JOIN_SELECT} WHERE t.user_id = ? AND t.status IN ('booked','waiting','serving') ORDER BY t.created_at DESC`,
     userId,
   );
 }
 
-export function getUserTickets(userId: string, limit = 25) {
+export async function getUserTickets(userId: string, limit = 25) {
   return all<Ticket>(
     `${TICKET_JOIN_SELECT} WHERE t.user_id = ? ORDER BY t.created_at DESC LIMIT ?`,
     userId,
@@ -111,22 +111,22 @@ export function getUserTickets(userId: string, limit = 25) {
   );
 }
 
-export function viewTicket(ticket: Ticket): TicketView {
-  const org = getOrganisation(ticket.org_id);
-  const ahead = queueAheadForTicket(
+export async function viewTicket(ticket: Ticket): Promise<TicketView> {
+  const org = await getOrganisation(ticket.org_id);
+  const ahead = await queueAheadForTicket(
     ticket.org_id,
     ticket.id,
     ticket.priority,
     ticket.created_at,
     ticket.status,
   );
-  const prediction = predictionForOrg(ticket.org_id);
+  const prediction = await predictionForOrg(ticket.org_id);
   return {
     ...ticket,
     ahead,
     position: ahead + 1,
     prediction,
-    estimate: estimateForAhead(ticket.org_id, ahead),
+    estimate: await estimateForAhead(ticket.org_id, ahead),
     org: {
       id: ticket.org_id,
       name: org?.name ?? ticket.org_name ?? "Service centre",
@@ -141,9 +141,9 @@ export function viewTicket(ticket: Ticket): TicketView {
   };
 }
 
-function nextToken(orgId: string, queueDate: string, prefix: string) {
-  const row = one<{ max_token: number | null }>(
-    `SELECT MAX(CAST(substr(token_no, instr(token_no, '-') + 1) AS INTEGER)) AS max_token
+async function nextToken(orgId: string, queueDate: string, prefix: string) {
+  const row = await one<{ max_token: number | null }>(
+    `SELECT MAX(CAST(split_part(token_no, '-', 2) AS INTEGER)) AS max_token
      FROM tickets WHERE org_id = ? AND queue_date = ?`,
     orgId,
     queueDate,
@@ -156,7 +156,7 @@ export function tokenPrefix(org: Organisation) {
   return (org.name.match(/[A-Za-z]/)?.[0] || "Q").toUpperCase();
 }
 
-export function getActiveRestriction(userId: string) {
+export async function getActiveRestriction(userId: string) {
   return one<{
     id: string;
     user_id: string;
@@ -178,11 +178,11 @@ export function getActiveRestriction(userId: string) {
   );
 }
 
-export function cancellationStats(userId: string) {
-  const days = Number(getSetting("cancellation_window_days", "30"));
-  const threshold = Number(getSetting("cancellation_threshold_count", "3"));
+export async function cancellationStats(userId: string) {
+  const days = Number(await getSetting("cancellation_window_days", "30"));
+  const threshold = Number(await getSetting("cancellation_threshold_count", "3"));
   const since = new Date(Date.now() - days * 86_400_000).toISOString();
-  const row = one<{ late: number; total: number }>(
+  const row = await one<{ late: number; total: number }>(
     `SELECT
        SUM(CASE WHEN cancel_category = 'late_user' THEN 1 ELSE 0 END) AS late,
        COUNT(*) AS total
@@ -198,7 +198,7 @@ export function cancellationStats(userId: string) {
   };
 }
 
-export function createTicket(opts: {
+export async function createTicket(opts: {
   orgId: string;
   userId: string;
   kind: "queue" | "appointment";
@@ -207,14 +207,14 @@ export function createTicket(opts: {
   emergencyReason?: string | null;
   actorRole: string;
   ip?: string;
-}): { ticket: TicketView; emergencyId?: string } {
-  const org = getOrganisation(opts.orgId);
+}): Promise<{ ticket: TicketView; emergencyId?: string }> {
+  const org = await getOrganisation(opts.orgId);
   if (!org) throw new AppError("Service centre not found.", 404);
   if (org.status !== "approved") {
     throw new AppError("This service centre is not currently accepting queues.", 400);
   }
 
-  const restriction = getActiveRestriction(opts.userId);
+  const restriction = await getActiveRestriction(opts.userId);
   if (restriction && !opts.emergencyReason) {
     throw new AppError(
       `New bookings are temporarily limited. ${restriction.reason}. You can appeal this from your dashboard.`,
@@ -246,10 +246,10 @@ export function createTicket(opts: {
       throw new AppError("That slot is outside the centre's operating hours.");
     }
     const slotKey = scheduled.toISOString().slice(0, 16);
-    const countRow = one<{ c: number }>(
+    const countRow = await one<{ c: number }>(
       `SELECT COUNT(*) AS c FROM tickets
        WHERE org_id = ? AND kind = 'appointment' AND status IN ('booked','waiting','serving')
-         AND substr(scheduled_for, 1, 16) = ?`,
+         AND left(scheduled_for, 16) = ?`,
       org.id,
       slotKey,
     );
@@ -258,8 +258,8 @@ export function createTicket(opts: {
     }
   }
 
-  const result = withTransaction(() => {
-    const existing = getActiveTicketFor(org.id, opts.userId);
+  const result = await withTransaction(async () => {
+    const existing = await getActiveTicketFor(org.id, opts.userId);
     if (existing) {
       throw new AppError(
         `You already have an active token (${existing.token_no}) at this centre.`,
@@ -268,10 +268,10 @@ export function createTicket(opts: {
       );
     }
     const queueDate = opts.kind === "appointment" && scheduled ? todayKey(scheduled) : todayKey();
-    const token = nextToken(org.id, queueDate, tokenPrefix(org));
+    const token = await nextToken(org.id, queueDate, tokenPrefix(org));
     const id = randomId("tkt_");
     const priority = opts.priority ?? "normal";
-    run(
+    await run(
       `INSERT INTO tickets
         (id, org_id, user_id, token_no, kind, status, priority, priority_reason, scheduled_for,
          queue_date, created_at, updated_at)
@@ -293,7 +293,7 @@ export function createTicket(opts: {
     let emergencyId: string | undefined;
     if (opts.emergencyReason) {
       emergencyId = randomId("emg_");
-      run(
+      await run(
         `INSERT INTO emergency_requests (id, ticket_id, org_id, user_id, reason, status, created_at)
          VALUES (?, ?, ?, ?, ?, 'pending', ?)`,
         emergencyId,
@@ -303,12 +303,12 @@ export function createTicket(opts: {
         opts.emergencyReason.trim().slice(0, 800),
         nowIso(),
       );
-      const staff = all<{ id: string }>(
+      const staff = await all<{ id: string }>(
         "SELECT id FROM users WHERE org_id = ? AND role = 'org'",
         org.id,
       );
       for (const member of staff) {
-        notify({
+        await notify({
           userId: member.id,
           type: "emergency",
           title: "Emergency triage request",
@@ -316,7 +316,7 @@ export function createTicket(opts: {
           ticketId: id,
         });
       }
-      logAudit({
+      await logAudit({
         actorId: opts.userId,
         actorRole: opts.actorRole,
         orgId: org.id,
@@ -328,7 +328,7 @@ export function createTicket(opts: {
       });
     }
 
-    notify({
+    await notify({
       userId: opts.userId,
       type: opts.kind === "appointment" ? "booking" : "queue",
       title: opts.kind === "appointment" ? "Appointment confirmed" : "You joined the queue",
@@ -339,7 +339,7 @@ export function createTicket(opts: {
       ticketId: id,
     });
 
-    logAudit({
+    await logAudit({
       actorId: opts.userId,
       actorRole: opts.actorRole,
       orgId: org.id,
@@ -350,13 +350,13 @@ export function createTicket(opts: {
       ip: opts.ip,
     });
 
-    return { ticket: getTicket(id)!, emergencyId };
+    return { ticket: (await getTicket(id))!, emergencyId };
   });
 
-  return { ticket: viewTicket(result.ticket), emergencyId: result.emergencyId };
+  return { ticket: await viewTicket(result.ticket), emergencyId: result.emergencyId };
 }
 
-export function cancelTicket(opts: {
+export async function cancelTicket(opts: {
   ticketId: string;
   actorId: string;
   actorRole: "user" | "org" | "admin";
@@ -365,7 +365,7 @@ export function cancelTicket(opts: {
   orgId?: string | null;
   ip?: string;
 }) {
-  const ticket = getTicket(opts.ticketId);
+  const ticket = await getTicket(opts.ticketId);
   if (!ticket) throw new AppError("Ticket not found.", 404);
   if (opts.actorRole === "user" && ticket.user_id !== opts.actorId) {
     throw new AppError("You can only cancel your own token.", 403);
@@ -397,8 +397,8 @@ export function cancelTicket(opts: {
     category = "admin_action";
   }
 
-  const result = withTransaction(() => {
-    run(
+  const result = await withTransaction(async () => {
+    await run(
       `UPDATE tickets SET status = 'cancelled', cancelled_at = ?, cancel_reason = ?,
          cancel_category = ?, updated_at = ? WHERE id = ? AND status IN ('booked','waiting','serving')`,
       nowIso(),
@@ -407,14 +407,14 @@ export function cancelTicket(opts: {
       nowIso(),
       ticket.id,
     );
-    run(
+    await run(
       "UPDATE emergency_requests SET status = 'withdrawn', resolved_at = ? WHERE ticket_id = ? AND status = 'pending'",
       nowIso(),
       ticket.id,
     );
 
     if (opts.actorRole !== "user") {
-      notify({
+      await notify({
         userId: ticket.user_id,
         type: "cancellation",
         title: "Token cancelled by the service centre",
@@ -425,13 +425,13 @@ export function cancelTicket(opts: {
 
     let restrictionCreated = false;
     if (opts.actorRole === "user" && category === "late_user") {
-      const stats = cancellationStats(ticket.user_id);
+      const stats = await cancellationStats(ticket.user_id);
       if (stats.late >= stats.threshold) {
-        const existing = getActiveRestriction(ticket.user_id);
+        const existing = await getActiveRestriction(ticket.user_id);
         if (!existing) {
-          const days = Number(getSetting("restriction_days", "7"));
+          const days = Number(await getSetting("restriction_days", "7"));
           const id = randomId("rst_");
-          run(
+          await run(
             `INSERT INTO restrictions (id, user_id, reason, detail, status, starts_at, ends_at, created_by, created_at)
              VALUES (?, ?, ?, ?, 'active', ?, ?, NULL, ?)`,
             id,
@@ -442,7 +442,7 @@ export function cancelTicket(opts: {
             new Date(Date.now() + days * 86_400_000).toISOString(),
             nowIso(),
           );
-          notify({
+          await notify({
             userId: ticket.user_id,
             type: "restriction",
             title: "Temporary booking limit applied",
@@ -453,7 +453,7 @@ export function cancelTicket(opts: {
       }
     }
 
-    logAudit({
+    await logAudit({
       actorId: opts.actorId,
       actorRole: opts.actorRole,
       orgId: ticket.org_id,
@@ -467,29 +467,29 @@ export function cancelTicket(opts: {
   });
 
   return {
-    ticket: viewTicket(getTicket(ticket.id)!),
+    ticket: await viewTicket((await getTicket(ticket.id))!),
     ...result,
   };
 }
 
-export function checkInTicket(opts: {
+export async function checkInTicket(opts: {
   ticketId: string;
   userId: string;
   ip?: string;
 }) {
-  const ticket = getTicket(opts.ticketId);
+  const ticket = await getTicket(opts.ticketId);
   if (!ticket) throw new AppError("Ticket not found.", 404);
   if (ticket.user_id !== opts.userId) {
     throw new AppError("This token does not belong to you.", 403);
   }
   if (ticket.status === "waiting") {
-    run(
+    await run(
       "UPDATE tickets SET checked_in_at = COALESCE(checked_in_at, ?), updated_at = ? WHERE id = ?",
       nowIso(),
       nowIso(),
       ticket.id,
     );
-    return { ticket: viewTicket(getTicket(ticket.id)!) };
+    return { ticket: await viewTicket((await getTicket(ticket.id))!) };
   }
   if (ticket.status !== "booked") {
     throw new AppError("This token cannot be checked in right now.", 400);
@@ -503,22 +503,22 @@ export function checkInTicket(opts: {
       throw new AppError("Your appointment window has passed. Please contact the centre.", 400);
     }
   }
-  withTransaction(() => {
-    run(
+  await withTransaction(async () => {
+    await run(
       `UPDATE tickets SET status = 'waiting', checked_in_at = ?, updated_at = ?
        WHERE id = ? AND status = 'booked'`,
       nowIso(),
       nowIso(),
       ticket.id,
     );
-    notify({
+    await notify({
       userId: ticket.user_id,
       type: "checkin",
       title: "Check-in confirmed",
       body: `You are checked in at ${ticket.org_name}. Token ${ticket.token_no} is now in the live queue.`,
       ticketId: ticket.id,
     });
-    logAudit({
+    await logAudit({
       actorId: opts.userId,
       actorRole: "user",
       orgId: ticket.org_id,
@@ -529,24 +529,24 @@ export function checkInTicket(opts: {
       ip: opts.ip,
     });
   });
-  return { ticket: viewTicket(getTicket(ticket.id)!) };
+  return { ticket: await viewTicket((await getTicket(ticket.id))!) };
 }
 
-export function callNextCustomer(opts: {
+export async function callNextCustomer(opts: {
   orgId: string;
   counterId: string;
   actorId: string;
   ip?: string;
 }) {
-  return withTransaction(() => {
-    const counter = one<{ id: string; name: string; org_id: string; is_active: number }>(
+  return withTransaction(async () => {
+    const counter = await one<{ id: string; name: string; org_id: string; is_active: number }>(
       "SELECT * FROM counters WHERE id = ? AND org_id = ?",
       opts.counterId,
       opts.orgId,
     );
     if (!counter) throw new AppError("Counter not found for your organisation.", 404);
     if (!counter.is_active) throw new AppError("This counter is currently closed.", 400);
-    const busy = one<{ id: string; token_no: string }>(
+    const busy = await one<{ id: string; token_no: string }>(
       "SELECT id, token_no FROM tickets WHERE counter_id = ? AND status = 'serving'",
       opts.counterId,
     );
@@ -557,16 +557,16 @@ export function callNextCustomer(opts: {
         "counter_busy",
       );
     }
-    const next = one<Ticket>(
+    const next = await one<Ticket>(
       `SELECT * FROM tickets
-       WHERE org_id = ? AND queue_date = date('now','localtime') AND status = 'waiting'
+       WHERE org_id = ? AND queue_date = CURRENT_DATE::text AND status = 'waiting'
        ORDER BY CASE priority WHEN 'emergency' THEN 0 WHEN 'senior' THEN 1 WHEN 'disability' THEN 1 ELSE 2 END,
                 created_at ASC
        LIMIT 1`,
       opts.orgId,
     );
     if (!next) throw new AppError("No customers are waiting in this queue.", 400);
-    const updated = run(
+    const updated = await run(
       `UPDATE tickets SET status = 'serving', called_at = ?, counter_id = ?, updated_at = ?
        WHERE id = ? AND status = 'waiting'`,
       nowIso(),
@@ -577,14 +577,14 @@ export function callNextCustomer(opts: {
     if (Number(updated.changes) !== 1) {
       throw new AppError("The queue changed. Please try again.", 409, "conflict");
     }
-    notify({
+    await notify({
       userId: next.user_id,
       type: "turn",
       title: "It's your turn",
       body: `Token ${next.token_no} is now being called at ${counter.name}. Please proceed to the counter.`,
       ticketId: next.id,
     });
-    logAudit({
+    await logAudit({
       actorId: opts.actorId,
       actorRole: "org",
       orgId: opts.orgId,
@@ -594,11 +594,11 @@ export function callNextCustomer(opts: {
       details: { token: next.token_no, counter: counter.name },
       ip: opts.ip,
     });
-    return { ticket: viewTicket(getTicket(next.id)!) };
+    return { ticket: await viewTicket((await getTicket(next.id))!) };
   });
 }
 
-export function updateTicketStatus(opts: {
+export async function updateTicketStatus(opts: {
   ticketId: string;
   orgId: string;
   actorId: string;
@@ -606,7 +606,7 @@ export function updateTicketStatus(opts: {
   reason?: string;
   ip?: string;
 }) {
-  const ticket = getTicket(opts.ticketId);
+  const ticket = await getTicket(opts.ticketId);
   if (!ticket) throw new AppError("Ticket not found.", 404);
   if (ticket.org_id !== opts.orgId) throw new AppError("Ticket not found.", 404);
   if (["completed", "cancelled", "no_show"].includes(ticket.status)) {
@@ -626,7 +626,7 @@ export function updateTicketStatus(opts: {
       ip: opts.ip,
     });
   }
-  withTransaction(() => {
+  await withTransaction(async () => {
     if (opts.status === "completed") {
       if (ticket.status !== "serving") {
         throw new AppError("Only a serving token can be completed.", 400);
@@ -636,7 +636,7 @@ export function updateTicketStatus(opts: {
         30,
         Math.round((Date.now() - new Date(started).getTime()) / 1000),
       );
-      run(
+      await run(
         `UPDATE tickets SET status = 'completed', completed_at = ?, service_seconds = ?, updated_at = ?
          WHERE id = ? AND status = 'serving'`,
         nowIso(),
@@ -644,7 +644,7 @@ export function updateTicketStatus(opts: {
         nowIso(),
         ticket.id,
       );
-      notify({
+      await notify({
         userId: ticket.user_id,
         type: "completed",
         title: "Visit completed",
@@ -652,12 +652,12 @@ export function updateTicketStatus(opts: {
         ticketId: ticket.id,
       });
     } else if (opts.status === "no_show") {
-      run(
+      await run(
         `UPDATE tickets SET status = 'no_show', updated_at = ? WHERE id = ? AND status IN ('waiting','booked')`,
         nowIso(),
         ticket.id,
       );
-      notify({
+      await notify({
         userId: ticket.user_id,
         type: "no_show",
         title: "Marked as no-show",
@@ -668,13 +668,13 @@ export function updateTicketStatus(opts: {
       if (ticket.status !== "waiting") {
         throw new AppError("Only a waiting token can be called.", 400);
       }
-      run(
+      await run(
         `UPDATE tickets SET status = 'serving', called_at = ?, updated_at = ? WHERE id = ? AND status = 'waiting'`,
         nowIso(),
         nowIso(),
         ticket.id,
       );
-      notify({
+      await notify({
         userId: ticket.user_id,
         type: "turn",
         title: "It's your turn",
@@ -682,7 +682,7 @@ export function updateTicketStatus(opts: {
         ticketId: ticket.id,
       });
     }
-    logAudit({
+    await logAudit({
       actorId: opts.actorId,
       actorRole: "org",
       orgId: opts.orgId,
@@ -693,10 +693,10 @@ export function updateTicketStatus(opts: {
       ip: opts.ip,
     });
   });
-  return { ticket: viewTicket(getTicket(ticket.id)!) };
+  return { ticket: await viewTicket((await getTicket(ticket.id))!) };
 }
 
-export function setPriority(opts: {
+export async function setPriority(opts: {
   ticketId: string;
   orgId: string;
   actorId: string;
@@ -704,7 +704,7 @@ export function setPriority(opts: {
   reason: string;
   ip?: string;
 }) {
-  const ticket = getTicket(opts.ticketId);
+  const ticket = await getTicket(opts.ticketId);
   if (!ticket) throw new AppError("Ticket not found.", 404);
   if (ticket.org_id !== opts.orgId) throw new AppError("Ticket not found.", 404);
   if (["completed", "cancelled", "no_show"].includes(ticket.status)) {
@@ -712,8 +712,8 @@ export function setPriority(opts: {
   }
   const reason = opts.reason?.trim();
   if (!reason) throw new AppError("A verification reason is required for priority changes.");
-  withTransaction(() => {
-    run(
+  await withTransaction(async () => {
+    await run(
       "UPDATE tickets SET priority = ?, priority_reason = ?, updated_at = ? WHERE id = ?",
       opts.priority,
       reason.slice(0, 300),
@@ -721,7 +721,7 @@ export function setPriority(opts: {
       ticket.id,
     );
     if (opts.priority === "emergency") {
-      run(
+      await run(
         `UPDATE emergency_requests SET status = 'approved', reviewed_by = ?, review_note = ?, resolved_at = ?
          WHERE ticket_id = ? AND status = 'pending'`,
         opts.actorId,
@@ -730,14 +730,14 @@ export function setPriority(opts: {
         ticket.id,
       );
     }
-    notify({
+    await notify({
       userId: ticket.user_id,
       type: "priority",
       title: opts.priority === "normal" ? "Priority status updated" : "Priority support granted",
       body: `Your token ${ticket.token_no} at ${ticket.org_name} is now marked as ${opts.priority}. Reason: ${reason}.`,
       ticketId: ticket.id,
     });
-    logAudit({
+    await logAudit({
       actorId: opts.actorId,
       actorRole: "org",
       orgId: opts.orgId,
@@ -748,19 +748,19 @@ export function setPriority(opts: {
       ip: opts.ip,
     });
   });
-  return { ticket: viewTicket(getTicket(ticket.id)!) };
+  return { ticket: await viewTicket((await getTicket(ticket.id))!) };
 }
 
-export function createEmergencyRequest(opts: {
+export async function createEmergencyRequest(opts: {
   ticketId: string;
   userId: string;
   reason: string;
   ip?: string;
 }) {
-  const ticket = getTicket(opts.ticketId);
+  const ticket = await getTicket(opts.ticketId);
   if (!ticket) throw new AppError("Ticket not found.", 404);
   if (ticket.user_id !== opts.userId) throw new AppError("This token does not belong to you.", 403);
-  const org = getOrganisation(ticket.org_id);
+  const org = await getOrganisation(ticket.org_id);
   if (!org?.emergency_enabled) {
     throw new AppError("Emergency triage requests are not enabled at this centre.", 400);
   }
@@ -771,7 +771,7 @@ export function createEmergencyRequest(opts: {
   if (reason.length < 10) {
     throw new AppError("Please briefly describe the situation so medical staff can assess it.");
   }
-  const existing = one<{ id: string; status: string }>(
+  const existing = await one<{ id: string; status: string }>(
     "SELECT id, status FROM emergency_requests WHERE ticket_id = ? AND status IN ('pending','approved')",
     ticket.id,
   );
@@ -779,8 +779,8 @@ export function createEmergencyRequest(opts: {
     throw new AppError("An emergency request is already open for this token.", 409);
   }
   const id = randomId("emg_");
-  withTransaction(() => {
-    run(
+  await withTransaction(async () => {
+    await run(
       `INSERT INTO emergency_requests (id, ticket_id, org_id, user_id, reason, status, created_at)
        VALUES (?, ?, ?, ?, ?, 'pending', ?)`,
       id,
@@ -790,12 +790,12 @@ export function createEmergencyRequest(opts: {
       reason,
       nowIso(),
     );
-    const staff = all<{ id: string }>(
+    const staff = await all<{ id: string }>(
       "SELECT id FROM users WHERE org_id = ? AND role = 'org'",
       ticket.org_id,
     );
     for (const member of staff) {
-      notify({
+      await notify({
         userId: member.id,
         type: "emergency",
         title: "Emergency triage request",
@@ -803,7 +803,7 @@ export function createEmergencyRequest(opts: {
         ticketId: ticket.id,
       });
     }
-    logAudit({
+    await logAudit({
       actorId: opts.userId,
       actorRole: "user",
       orgId: ticket.org_id,
@@ -817,7 +817,7 @@ export function createEmergencyRequest(opts: {
   return { id };
 }
 
-export function reviewEmergency(opts: {
+export async function reviewEmergency(opts: {
   emergencyId: string;
   orgId: string;
   actorId: string;
@@ -825,7 +825,7 @@ export function reviewEmergency(opts: {
   note: string;
   ip?: string;
 }) {
-  const request = one<{
+  const request = await one<{
     id: string;
     ticket_id: string;
     org_id: string;
@@ -834,10 +834,10 @@ export function reviewEmergency(opts: {
   }>("SELECT * FROM emergency_requests WHERE id = ? AND org_id = ?", opts.emergencyId, opts.orgId);
   if (!request) throw new AppError("Emergency request not found.", 404);
   if (request.status !== "pending") throw new AppError("This request has already been reviewed.", 400);
-  const ticket = getTicket(request.ticket_id);
+  const ticket = await getTicket(request.ticket_id);
   if (!ticket) throw new AppError("Linked token not found.", 404);
-  withTransaction(() => {
-    run(
+  await withTransaction(async () => {
+    await run(
       `UPDATE emergency_requests SET status = ?, reviewed_by = ?, review_note = ?, resolved_at = ?
        WHERE id = ? AND status = 'pending'`,
       opts.decision,
@@ -847,14 +847,14 @@ export function reviewEmergency(opts: {
       request.id,
     );
     if (opts.decision === "approved") {
-      run(
+      await run(
         `UPDATE tickets SET priority = 'emergency', priority_reason = ?, updated_at = ?
          WHERE id = ? AND status IN ('waiting','serving','booked')`,
         `Emergency triage approved by medical staff: ${opts.note.trim().slice(0, 200)}`,
         nowIso(),
         ticket.id,
       );
-      notify({
+      await notify({
         userId: ticket.user_id,
         type: "emergency",
         title: "Emergency priority approved",
@@ -862,7 +862,7 @@ export function reviewEmergency(opts: {
         ticketId: ticket.id,
       });
     } else {
-      notify({
+      await notify({
         userId: ticket.user_id,
         type: "emergency",
         title: "Emergency priority not approved",
@@ -870,7 +870,7 @@ export function reviewEmergency(opts: {
         ticketId: ticket.id,
       });
     }
-    logAudit({
+    await logAudit({
       actorId: opts.actorId,
       actorRole: "org",
       orgId: opts.orgId,
@@ -897,13 +897,13 @@ export function qrPayload(ticket: Pick<Ticket, "id" | "token_no" | "org_id">) {
   return `SKIPLINE|v1|${ticket.id}|${ticket.token_no}|${ticket.org_id}|${signTicket(ticket)}`;
 }
 
-export function verifyQrPayload(payload: string) {
+export async function verifyQrPayload(payload: string) {
   const parts = payload.trim().split("|");
   if (parts.length !== 6 || parts[0] !== "SKIPLINE" || parts[1] !== "v1") {
     return null;
   }
   const [, , id, token, orgId, signature] = parts;
-  const ticket = getTicket(id);
+  const ticket = await getTicket(id);
   if (!ticket) return null;
   if (ticket.token_no !== token || ticket.org_id !== orgId) return null;
   if (signTicket(ticket) !== signature) return null;

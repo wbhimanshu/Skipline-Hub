@@ -22,7 +22,9 @@ import {
 } from "lucide-react";
 import { one } from "@/lib/db";
 import { normalizeLang, t, LANG_COOKIE } from "@/lib/i18n";
+import { CountUp } from "@/components/count-up";
 import { Reveal } from "@/components/reveal";
+import { TiltCard } from "@/components/tilt-card";
 import { SectionHeading } from "@/components/ui";
 import {
   AlertScene,
@@ -47,19 +49,19 @@ export default async function LandingPage() {
   const jar = await cookies();
   const lang = normalizeLang(jar.get(LANG_COOKIE)?.value);
 
-  const orgs = one<{ c: number }>(
+  const orgs = await one<{ c: number }>(
     "SELECT COUNT(*) AS c FROM organizations WHERE status = 'approved'",
   );
-  const completed = one<{ c: number }>(
+  const completed = await one<{ c: number }>(
     "SELECT COUNT(*) AS c FROM tickets WHERE status = 'completed'",
   );
-  const avgWait = one<{ v: number | null }>(
-    `SELECT AVG((julianday(completed_at) - julianday(checked_in_at)) * 1440) AS v
+  const avgWait = await one<{ v: number | null }>(
+    `SELECT AVG(EXTRACT(EPOCH FROM (completed_at::timestamptz - checked_in_at::timestamptz)) / 60) AS v
      FROM tickets WHERE status = 'completed' AND completed_at IS NOT NULL
        AND checked_in_at IS NOT NULL AND completed_at >= ?`,
     new Date(Date.now() - 30 * 86_400_000).toISOString(),
   );
-  const activeNow = one<{ c: number }>(
+  const activeNow = await one<{ c: number }>(
     "SELECT COUNT(*) AS c FROM tickets WHERE status IN ('waiting','serving')",
   );
 
@@ -134,9 +136,12 @@ export default async function LandingPage() {
   return (
     <>
       <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-grid-faint grid-overlay opacity-70" />
-        <div className="orb left-1/2 top-[-10rem] h-80 w-80 -translate-x-1/2 bg-brand-300/40" />
-        <div className="container-shell relative pb-16 pt-16 sm:pb-24 sm:pt-24">
+        <div className="pointer-events-none absolute inset-0 bg-grid-faint grid-overlay opacity-40" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-brand-500/10 via-transparent to-transparent" />
+        <div className="orb left-1/4 top-[-8rem] h-96 w-96 bg-brand-300/50 blur-3xl" />
+        <div className="orb right-1/4 top-1/3 h-80 w-80 bg-cyan-400/30 blur-3xl" />
+        <div className="orb left-1/2 bottom-[-6rem] h-72 w-72 -translate-x-1/2 bg-brand-100/20 blur-3xl" />
+        <div className="container-shell relative pb-20 pt-20 sm:pb-32 sm:pt-28">
           <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
             <div>
               <Reveal>
@@ -146,7 +151,7 @@ export default async function LandingPage() {
                 </span>
               </Reveal>
               <Reveal delay={60}>
-                <h1 className="mt-6 max-w-2xl font-display text-[2.6rem] font-bold leading-[1.02] tracking-[-0.03em] text-white sm:text-5xl xl:text-[4.15rem]">
+                <h1 className="mt-6 max-w-2xl font-display text-[2.9rem] font-bold leading-[1.0] tracking-[-0.04em] text-white sm:text-6xl xl:text-[4.6rem] drop-shadow-[0_2px_24px_rgba(99,102,241,0.35)]">
                   {t(lang, "heroTitle1")}{" "}
                   <span className="text-gradient-brand">{t(lang, "heroTitle2")}</span>
                 </h1>
@@ -191,8 +196,8 @@ export default async function LandingPage() {
 
             <Reveal delay={160} className="relative">
               <div className="relative mx-auto max-w-[560px]">
-                <div className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-tr from-brand-300/40 via-transparent to-brand-100/40 blur-2xl" />
-                <div className="relative animate-float-slow overflow-hidden rounded-[2rem] border border-brand-300/40 bg-ink-900 shadow-panel">
+                <div className="absolute -inset-8 rounded-[3rem] bg-gradient-to-tr from-brand-300/60 via-cyan-400/30 to-brand-100/40 blur-3xl" />
+                <div className="relative animate-float-slow overflow-hidden rounded-[2rem] border border-brand-300/60 bg-ink-900 shadow-[0_30px_80px_-20px_rgba(99,102,241,0.45)]">
                   <Image
                     src="/queue-hero.jpeg"
                     alt="People waiting comfortably while their turns are managed on a phone"

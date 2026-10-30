@@ -46,7 +46,7 @@ export async function sendMail(opts: {
   html?: string;
   actionUrl?: string;
 }) {
-  run(
+  await run(
     "INSERT INTO email_log (id, to_email, subject, body, action_url, created_at) VALUES (?, ?, ?, ?, ?, ?)",
     randomId("mail_"),
     opts.to,

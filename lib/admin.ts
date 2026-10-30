@@ -80,8 +80,8 @@ export type AdminAuditRow = {
   org_name: string | null;
 };
 
-export function adminOrganisations(status = "all"): AdminOrganisation[] {
-  const rows = all<AdminOrganisation>(
+export async function adminOrganisations(status = "all"): Promise<AdminOrganisation[]> {
+  const rows = await all<AdminOrganisation>(
     `SELECT o.id, o.name, o.slug, o.category, o.city, o.status, o.status_reason,
             o.email, o.phone, o.created_at, o.approved_at,
             u.name AS owner_name, u.email AS owner_email,
@@ -96,8 +96,8 @@ export function adminOrganisations(status = "all"): AdminOrganisation[] {
   return rows.filter((row) => row.status === status);
 }
 
-export function adminUsers(query = ""): AdminUser[] {
-  const rows = all<AdminUser>(
+export async function adminUsers(query = ""): Promise<AdminUser[]> {
+  const rows = await all<AdminUser>(
     `SELECT u.id, u.name, u.email, u.role, u.phone, u.email_verified_at, u.created_at,
             u.last_login_at, u.restricted_until, u.restriction_reason,
             o.name AS org_name,
@@ -115,7 +115,7 @@ export function adminUsers(query = ""): AdminUser[] {
   );
 }
 
-export function adminReports(): AdminReport[] {
+export async function adminReports(): Promise<AdminReport[]> {
   return all<AdminReport>(
     `SELECT r.*, u.name AS user_name, u.email AS user_email, o.name AS org_name
      FROM reports r
@@ -126,7 +126,7 @@ export function adminReports(): AdminReport[] {
   );
 }
 
-export function adminAppeals(): AdminAppeal[] {
+export async function adminAppeals(): Promise<AdminAppeal[]> {
   return all<AdminAppeal>(
     `SELECT a.*, u.name AS user_name, u.email AS user_email,
             r.reason AS restriction_reason, r.detail AS restriction_detail,
@@ -139,7 +139,7 @@ export function adminAppeals(): AdminAppeal[] {
   );
 }
 
-export function adminAuditLogs(limit = 200): AdminAuditRow[] {
+export async function adminAuditLogs(limit = 200): Promise<AdminAuditRow[]> {
   return all<AdminAuditRow>(
     `SELECT a.*, u.name AS actor_name, o.name AS org_name
      FROM audit_logs a
@@ -156,24 +156,24 @@ export type FairnessSettings = {
   restrictionDays: number;
 };
 
-export function fairnessSettings(): FairnessSettings {
+export async function fairnessSettings(): Promise<FairnessSettings> {
   return {
-    thresholdCount: Number(getSetting("cancellation_threshold_count", "3")),
-    windowDays: Number(getSetting("cancellation_window_days", "30")),
-    restrictionDays: Number(getSetting("restriction_days", "7")),
+    thresholdCount: Number(await getSetting("cancellation_threshold_count", "3")),
+    windowDays: Number(await getSetting("cancellation_window_days", "30")),
+    restrictionDays: Number(await getSetting("restriction_days", "7")),
   };
 }
 
-export function adminCounts() {
-  const users = one<{ c: number }>("SELECT COUNT(*) AS c FROM users WHERE role != 'admin'");
-  const orgs = one<{ c: number }>("SELECT COUNT(*) AS c FROM organizations");
-  const pendingOrgs = one<{ c: number }>(
+export async function adminCounts() {
+  const users = await one<{ c: number }>("SELECT COUNT(*) AS c FROM users WHERE role != 'admin'");
+  const orgs = await one<{ c: number }>("SELECT COUNT(*) AS c FROM organizations");
+  const pendingOrgs = await one<{ c: number }>(
     "SELECT COUNT(*) AS c FROM organizations WHERE status = 'pending'",
   );
-  const pendingAppeals = one<{ c: number }>(
+  const pendingAppeals = await one<{ c: number }>(
     "SELECT COUNT(*) AS c FROM appeals WHERE status = 'pending'",
   );
-  const openReports = one<{ c: number }>(
+  const openReports = await one<{ c: number }>(
     "SELECT COUNT(*) AS c FROM reports WHERE status != 'resolved'",
   );
   return {

@@ -45,15 +45,15 @@ export default async function TicketPage({
 }) {
   const user = await requireRole("user");
   const { id } = await params;
-  const raw = getTicket(id);
+  const raw = await getTicket(id);
   if (!raw || raw.user_id !== user.id) notFound();
-  const ticket = viewTicket(raw);
+  const ticket = await viewTicket(raw);
   const active = ["booked", "waiting", "serving"].includes(ticket.status);
-  const emergency = one<EmergencyRow>(
+  const emergency = await one<EmergencyRow>(
     "SELECT * FROM emergency_requests WHERE ticket_id = ? ORDER BY created_at DESC LIMIT 1",
     ticket.id,
   );
-  const alerts = all<{ id: string; title: string; body: string; created_at: string }>(
+  const alerts = await all<{ id: string; title: string; body: string; created_at: string }>(
     "SELECT id, title, body, created_at FROM notifications WHERE ticket_id = ? ORDER BY created_at DESC LIMIT 6",
     ticket.id,
   );

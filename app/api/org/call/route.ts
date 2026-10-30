@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   const parsed = await parseBody(req, schema);
   if (parsed.error) return parsed.error;
   try {
-    const result = callNextCustomer({
+    const result = await callNextCustomer({
       orgId: auth.user.org_id!,
       counterId: parsed.data.counterId,
       actorId: auth.user.id,

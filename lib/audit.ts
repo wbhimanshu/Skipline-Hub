@@ -1,7 +1,7 @@
 import { run } from "./db";
 import { nowIso, randomId } from "./utils";
 
-export function logAudit(opts: {
+export async function logAudit(opts: {
   actorId: string | null;
   actorRole: string;
   orgId?: string | null;
@@ -11,7 +11,7 @@ export function logAudit(opts: {
   details?: Record<string, unknown>;
   ip?: string;
 }) {
-  run(
+  await run(
     `INSERT INTO audit_logs
       (id, actor_id, actor_role, org_id, action, entity, entity_id, details, ip, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -28,14 +28,14 @@ export function logAudit(opts: {
   );
 }
 
-export function notify(opts: {
+export async function notify(opts: {
   userId: string;
   type: string;
   title: string;
   body: string;
   ticketId?: string | null;
 }) {
-  run(
+  await run(
     `INSERT INTO notifications (id, user_id, type, title, body, ticket_id, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
     randomId("notif_"),

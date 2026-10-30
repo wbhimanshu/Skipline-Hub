@@ -29,10 +29,10 @@ type PredictionStats = {
   avgSeconds: number | null;
 };
 
-function predictionSettings(): PredictionSettings {
+async function predictionSettings(): Promise<PredictionSettings> {
   return {
-    days: Number(getSetting("prediction_history_days", "45")),
-    minSamples: Number(getSetting("prediction_min_samples", "8")),
+    days: Number(await getSetting("prediction_history_days", "45")),
+    minSamples: Number(await getSetting("prediction_min_samples", "8")),
   };
 }
 
@@ -93,31 +93,31 @@ function avgMinutes(seconds: number) {
   return clamp(seconds / 60, 2, 30);
 }
 
-export function predictionsForOrgs(orgIds: string[]): Map<string, Prediction> {
+export async function predictionsForOrgs(orgIds: string[]): Promise<Map<string, Prediction>> {
   const ids = Array.from(new Set(orgIds.filter(Boolean)));
   const map = new Map<string, Prediction>();
   if (ids.length === 0) return map;
 
-  const settings = predictionSettings();
+  const settings = await predictionSettings();
   const placeholders = ids.map(() => "?").join(", ");
 
-  const counters = all<{ org_id: string; c: number }>(
+  const counters = await all<{ org_id: string; c: number }>(
     `SELECT org_id, COUNT(*) AS c
      FROM counters
      WHERE is_active = 1 AND org_id IN (${placeholders})
      GROUP BY org_id`,
     ...ids,
   );
-  const queue = all<{ org_id: string; waiting: number; serving: number }>(
+  const queue = await all<{ org_id: string; waiting: number; serving: number }>(
     `SELECT org_id,
        SUM(CASE WHEN status = 'waiting' THEN 1 ELSE 0 END) AS waiting,
        SUM(CASE WHEN status = 'serving' THEN 1 ELSE 0 END) AS serving
      FROM tickets
-     WHERE queue_date = date('now','localtime') AND org_id IN (${placeholders})
+     WHERE queue_date = CURRENT_DATE::text AND org_id IN (${placeholders})
      GROUP BY org_id`,
     ...ids,
   );
-  const history = all<{ org_id: string; n: number; avg_seconds: number | null }>(
+  const history = await all<{ org_id: string; n: number; avg_seconds: number | null }>(
     `SELECT org_id, COUNT(*) AS n, AVG(service_seconds) AS avg_seconds
      FROM tickets
      WHERE status = 'completed' AND service_seconds IS NOT NULL
@@ -152,27 +152,27 @@ export function predictionsForOrgs(orgIds: string[]): Map<string, Prediction> {
   return map;
 }
 
-export function predictionForOrg(orgId: string): Prediction {
-  return predictionsForOrgs([orgId]).get(orgId)!;
+export async function predictionForOrg(orgId: string): Promise<Prediction> {
+  return (await predictionsForOrgs([orgId])).get(orgId)!;
 }
 
-export function queueAheadForTicket(
+export async function queueAheadForTicket(
   orgId: string,
   ticketId: string,
   priority: string,
   createdAt: string,
   status: string,
-): number {
+): Promise<number> {
   if (status === "serving") return 0;
   const rank = priorityRank(priority);
-  const serving = one<{ c: number }>(
+  const serving = await one<{ c: number }>(
     `SELECT COUNT(*) AS c FROM tickets
-     WHERE org_id = ? AND queue_date = date('now','localtime') AND status = 'serving'`,
+     WHERE org_id = ? AND queue_date = CURRENT_DATE::text AND status = 'serving'`,
     orgId,
   );
-  const waiting = all<{ priority: string; created_at: string; id: string }>(
+  const waiting = await all<{ priority: string; created_at: string; id: string }>(
     `SELECT id, priority, created_at FROM tickets
-     WHERE org_id = ? AND queue_date = date('now','localtime')
+     WHERE org_id = ? AND queue_date = CURRENT_DATE::text
        AND status = 'waiting' AND id != ?`,
     orgId,
     ticketId,
@@ -198,8 +198,8 @@ export function priorityRank(priority: string) {
   }
 }
 
-export function estimateForAhead(orgId: string, ahead: number) {
-  const base = predictionForOrg(orgId);
+export async function estimateForAhead(orgId: string, ahead: number) {
+  const base = await predictionForOrg(orgId);
   const counters = Math.max(1, base.activeCounters);
   const central = (ahead * base.avgServiceMinutes) / counters;
   const minutes = Math.max(0, Math.round(central));

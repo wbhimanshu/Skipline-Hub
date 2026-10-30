@@ -32,7 +32,7 @@ export default async function AdminOrganisationsPage({
   await requireRole("admin");
   const params = await searchParams;
   const status = TABS.some((tab) => tab.value === params.status) ? params.status! : "all";
-  const all = adminOrganisations("all");
+  const all = await adminOrganisations("all");
   const organisations = status === "all" ? all : all.filter((org) => org.status === status);
 
   return (

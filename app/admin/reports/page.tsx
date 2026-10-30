@@ -15,7 +15,7 @@ function statusClass(status: string) {
 
 export default async function AdminReportsPage() {
   await requireRole("admin");
-  const reports = adminReports();
+  const reports = await adminReports();
   const open = reports.filter((report) => report.status === "open").length;
   const reviewing = reports.filter((report) => report.status === "reviewing").length;
 

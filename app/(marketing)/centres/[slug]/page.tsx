@@ -24,7 +24,7 @@ import {
 import { predictionForOrg } from "@/lib/prediction";
 import { getCurrentUser, isRestricted } from "@/lib/auth";
 import { getActiveTicketFor } from "@/lib/queue";
-import { CentreMap } from "@/components/centre-map";
+import { DirectionsMap } from "@/components/directions-map";
 import { JoinPanel } from "@/components/join-panel";
 import { ConfidenceBadge, InlineNotice, PriorityBadge } from "@/components/ui";
 import { formatTime } from "@/lib/utils";
@@ -35,7 +35,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const org = one<Organisation>(
+  const org = await one<Organisation>(
     "SELECT * FROM organizations WHERE slug = ? AND status = 'approved'",
     slug,
   );
@@ -52,20 +52,19 @@ export default async function CentrePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const org = getOrganisation(
-    one<{ id: string }>(
-      "SELECT id FROM organizations WHERE slug = ? AND status = 'approved'",
-      slug,
-    )?.id ?? "",
+  const slugRow = await one<{ id: string }>(
+    "SELECT id FROM organizations WHERE slug = ? AND status = 'approved'",
+    slug,
   );
+  const org = await getOrganisation(slugRow?.id ?? "");
   if (!org) notFound();
 
   const user = await getCurrentUser();
   const isCustomer = user?.role === "user";
-  const activeTicket = isCustomer ? getActiveTicketFor(org.id, user.id) : null;
-  const prediction = predictionForOrg(org.id);
+  const activeTicket = isCustomer ? await getActiveTicketFor(org.id, user.id) : null;
+  const prediction = await predictionForOrg(org.id);
   const open = isOpenNow(org);
-  const slots = availableSlots(org, 4);
+  const slots = await availableSlots(org, 4);
   const services = org.services.split(",").map((item) => item.trim()).filter(Boolean);
   const emergencyAvailable = Boolean(org.emergency_enabled);
   const isOrgAccount = user?.role === "org";
@@ -200,22 +199,13 @@ export default async function CentrePage({
               <MapPin className="h-4 w-4 text-slate-400" />
               Location
             </h2>
-            <CentreMap
-              points={[
-                {
-                  id: org.id,
-                  slug: org.slug,
-                  name: org.name,
-                  category: org.category,
-                  address: org.address,
-                  city: org.city,
-                  lat: org.lat,
-                  lng: org.lng,
-                  wait: prediction.minutes,
-                  isOpen: open,
-                },
-              ]}
-              height="320px"
+            <DirectionsMap
+              name={org.name}
+              address={org.address}
+              city={org.city}
+              lat={org.lat}
+              lng={org.lng}
+              height="360px"
             />
           </div>
         </div>

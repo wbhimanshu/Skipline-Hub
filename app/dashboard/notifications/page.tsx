@@ -7,7 +7,7 @@ export const metadata = { title: "Notifications" };
 
 export default async function NotificationsPage() {
   const user = await requireRole("user");
-  const notifications = all<NotificationRow>(
+  const notifications = await all<NotificationRow>(
     "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 100",
     user.id,
   );

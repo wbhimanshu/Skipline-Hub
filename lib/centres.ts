@@ -70,14 +70,14 @@ export function haversineKm(
   return Math.round(2 * r * Math.asin(Math.sqrt(x)) * 10) / 10;
 }
 
-export function listCentres(opts: {
+export async function listCentres(opts: {
   query?: string;
   category?: string;
   lat?: number;
   lng?: number;
   sort?: string;
-}): CentreListing[] {
-  let rows = all<Organisation>(
+}): Promise<CentreListing[]> {
+  let rows = await all<Organisation>(
     "SELECT * FROM organizations WHERE status = 'approved' ORDER BY name ASC",
   );
   if (opts.category && opts.category !== "all") {
@@ -94,7 +94,7 @@ export function listCentres(opts: {
       );
     }
   }
-  const predictions = predictionsForOrgs(rows.map((row) => row.id));
+  const predictions = await predictionsForOrgs(rows.map((row) => row.id));
   const listings: CentreListing[] = rows.map((row) => {
     const services = row.services
       .split(",")
@@ -127,20 +127,20 @@ export function listCentres(opts: {
   return listings;
 }
 
-export function getOrganisation(id: string): Organisation | undefined {
+export async function getOrganisation(id: string): Promise<Organisation | undefined> {
   return one<Organisation>("SELECT * FROM organizations WHERE id = ?", id);
 }
 
 export type SlotGroup = { date: string; label: string; times: string[] };
 
-export function availableSlots(
+export async function availableSlots(
   org: Organisation,
   days = 4,
   capacity = 3,
-): SlotGroup[] {
+): Promise<SlotGroup[]> {
   const [openH, openM] = org.open_time.split(":").map(Number);
   const [closeH, closeM] = org.close_time.split(":").map(Number);
-  const booked = all<{ scheduled_for: string }>(
+  const booked = await all<{ scheduled_for: string }>(
     `SELECT scheduled_for FROM tickets
      WHERE org_id = ? AND kind = 'appointment'
        AND status IN ('booked','waiting','serving')

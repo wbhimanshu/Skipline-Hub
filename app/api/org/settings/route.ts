@@ -29,7 +29,7 @@ export async function PATCH(req: NextRequest) {
     });
   }
   try {
-    run(
+    await run(
       `UPDATE organizations SET name = ?, description = ?, phone = ?, email = ?, address = ?,
          city = ?, open_time = ?, close_time = ?, slot_minutes = ?, services = ?,
          priority_policy = ?, cancellation_policy = ?, emergency_enabled = ?
@@ -49,7 +49,7 @@ export async function PATCH(req: NextRequest) {
       input.emergencyEnabled ? 1 : 0,
       auth.user.org_id!,
     );
-    logAudit({
+    await logAudit({
       actorId: auth.user.id,
       actorRole: "org",
       orgId: auth.user.org_id,

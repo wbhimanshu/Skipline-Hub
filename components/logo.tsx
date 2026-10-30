@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -16,29 +17,16 @@ export function Logo({
       className={cn("group inline-flex items-center gap-2.5", className)}
       aria-label="Skipline Hub home"
     >
-      <span className="relative grid h-10 w-10 place-items-center overflow-hidden rounded-[13px] bg-gradient-to-br from-brand-600 via-brand-500 to-brand-300 shadow-glow">
-        <svg
-          viewBox="0 0 32 32"
-          className="h-6 w-6 text-cream"
-          fill="none"
-          aria-hidden="true"
-        >
-          <path
-            d="M23 8.75H14.4a4.15 4.15 0 0 0 0 8.3h3.2a4.15 4.15 0 0 1 0 8.3H9"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          />
-          <path
-            d="m23.75 22.5 3.5 2.8-3.5 2.8"
-            stroke="currentColor"
-            strokeWidth="2.1"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity="0.9"
-          />
-        </svg>
-        <span className="absolute inset-0 bg-gradient-to-tr from-brand-900/20 via-transparent to-cream/25" />
+      <span className="relative grid h-11 w-11 place-items-center overflow-hidden rounded-[14px] bg-[#150e09] ring-1 ring-brand-500/25 shadow-glow transition-transform duration-500 ease-out group-hover:scale-[1.04]">
+        <Image
+          src="/logo-mark.png"
+          alt=""
+          width={478}
+          height={387}
+          priority
+          className="h-[26px] w-auto object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]"
+        />
+        <span className="pointer-events-none absolute inset-0 rounded-[14px] bg-gradient-to-tr from-brand-900/30 via-transparent to-white/[0.07]" />
       </span>
       {!compact ? (
         <span className="flex flex-col leading-none">

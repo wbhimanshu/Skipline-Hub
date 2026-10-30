@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { currentUserSafe } from "@/lib/session";
-import { getDb } from "@/lib/db";
+import { run } from "@/lib/db";
 import { guardMutation, jsonError, parseBody } from "@/lib/http";
 import { LANG_COOKIE, LARGE_TEXT_COOKIE } from "@/lib/i18n";
 import { prefsSchema } from "@/lib/validation";
@@ -31,9 +31,12 @@ export async function PUT(req: NextRequest) {
   const user = await currentUserSafe();
   if (user) {
     try {
-      getDb()
-        .prepare("UPDATE users SET language = ?, large_text = ? WHERE id = ?")
-        .run(language, largeText ? 1 : 0, user.id);
+      await run(
+        "UPDATE users SET language = ?, large_text = ? WHERE id = ?",
+        language,
+        largeText ? 1 : 0,
+        user.id,
+      );
     } catch (error) {
       if (process.env.NODE_ENV !== "production") {
         console.warn("[prefs] preference update failed", error);

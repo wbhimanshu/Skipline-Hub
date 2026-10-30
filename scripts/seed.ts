@@ -1,4 +1,4 @@
-import { all, getDb } from "../lib/db";
+import { all, getDb } from "../lib/db-sqlite";
 
 const db = getDb();
 const users = all<{ c: number }>("SELECT COUNT(*) AS c FROM users")[0];

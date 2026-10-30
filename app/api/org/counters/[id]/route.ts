@@ -27,14 +27,14 @@ export async function PATCH(
   const parsed = await parseBody(req, counterToggleSchema);
   if (parsed.error) return parsed.error;
   try {
-    const counter = one<{ id: string; name: string }>(
+    const counter = await one<{ id: string; name: string }>(
       "SELECT id, name FROM counters WHERE id = ? AND org_id = ?",
       id,
       auth.user.org_id!,
     );
     if (!counter) return jsonError("Counter not found.", 404);
     if (!parsed.data.isActive) {
-      const serving = one<{ c: number }>(
+      const serving = await one<{ c: number }>(
         "SELECT COUNT(*) AS c FROM tickets WHERE counter_id = ? AND status = 'serving'",
         id,
       );
@@ -42,13 +42,13 @@ export async function PATCH(
         return jsonError("Complete the customer currently being served before closing this counter.", 409);
       }
     }
-    run(
+    await run(
       "UPDATE counters SET is_active = ? WHERE id = ? AND org_id = ?",
       parsed.data.isActive ? 1 : 0,
       id,
       auth.user.org_id!,
     );
-    logAudit({
+    await logAudit({
       actorId: auth.user.id,
       actorRole: "org",
       orgId: auth.user.org_id,
@@ -72,21 +72,21 @@ export async function DELETE(
   if (auth.response) return auth.response;
   const { id } = await params;
   try {
-    const counter = one<{ id: string; name: string }>(
+    const counter = await one<{ id: string; name: string }>(
       "SELECT id, name FROM counters WHERE id = ? AND org_id = ?",
       id,
       auth.user.org_id!,
     );
     if (!counter) return jsonError("Counter not found.", 404);
-    const used = one<{ c: number }>(
+    const used = await one<{ c: number }>(
       "SELECT COUNT(*) AS c FROM tickets WHERE counter_id = ?",
       id,
     );
     if (Number(used?.c ?? 0) > 0) {
       return jsonError("This counter has visit history and cannot be deleted. Close it instead.", 409);
     }
-    run("DELETE FROM counters WHERE id = ? AND org_id = ?", id, auth.user.org_id!);
-    logAudit({
+    await run("DELETE FROM counters WHERE id = ? AND org_id = ?", id, auth.user.org_id!);
+    await logAudit({
       actorId: auth.user.id,
       actorRole: "org",
       orgId: auth.user.org_id,

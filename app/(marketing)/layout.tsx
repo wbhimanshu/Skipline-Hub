@@ -1,4 +1,5 @@
 import { getCurrentUser } from "@/lib/auth";
+import { ScrollProgress } from "@/components/scroll-progress";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 
@@ -12,6 +13,7 @@ export default async function MarketingLayout({
   const user = await getCurrentUser();
   return (
     <div className="flex min-h-screen flex-col">
+      <ScrollProgress />
       <SiteHeader user={user ? { id: user.id, name: user.name, role: user.role } : null} />
       <main id="main-content" className="flex-1">
         {children}

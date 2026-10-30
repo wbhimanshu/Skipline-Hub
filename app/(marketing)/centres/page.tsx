@@ -65,7 +65,7 @@ export default async function CentresPage({
   const lang = normalizeLang(jar.get(LANG_COOKIE)?.value);
   const lat = Number(query.lat);
   const lng = Number(query.lng);
-  const centres = listCentres({
+  const centres = await listCentres({
     query: query.q,
     category: query.category,
     sort: query.sort,

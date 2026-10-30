@@ -25,14 +25,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const parsed = await parseBody(req, reportUpdateSchema);
   if (parsed.error) return parsed.error;
   const { id } = await params;
-  const report = one<{ id: string; user_id: string | null; subject: string; status: string }>(
+  const report = await one<{ id: string; user_id: string | null; subject: string; status: string }>(
     "SELECT id, user_id, subject, status FROM reports WHERE id = ?",
     id,
   );
   if (!report) return jsonError("Report not found.", 404);
 
   const { status, note } = parsed.data;
-  run(
+  await run(
     `UPDATE reports SET status = ?, admin_note = ?,
        resolved_at = CASE WHEN ? = 'resolved' THEN ? ELSE NULL END
      WHERE id = ?`,
@@ -44,7 +44,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   );
 
   if (report.user_id) {
-    notify({
+    await notify({
       userId: report.user_id,
       type: "report",
       title: status === "resolved" ? "Your report has been resolved" : "Your report is being reviewed",
@@ -55,7 +55,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     });
   }
 
-  logAudit({
+  await logAudit({
     actorId: auth.user.id,
     actorRole: "admin",
     action: `report.${status}`,

@@ -10,7 +10,7 @@ export const metadata = { title: "Organisation settings" };
 
 export default async function OrgSettingsPage() {
   const user = await requireOrgStaff();
-  const org = getOrganisation(user.org_id!);
+  const org = await getOrganisation(user.org_id!);
   if (!org) notFound();
   return (
     <div className="space-y-6">

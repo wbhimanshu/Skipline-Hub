@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const parsed = await parseBody(req, userActionSchema);
   if (parsed.error) return parsed.error;
   const { id } = await params;
-  const user = one<{
+  const user = await one<{
     id: string;
     name: string;
     role: string;
@@ -44,8 +44,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   if (action === "verify") {
     if (user.email_verified_at) return jsonError("This account is already verified.");
-    run("UPDATE users SET email_verified_at = ? WHERE id = ?", nowIso(), user.id);
-    notify({
+    await run("UPDATE users SET email_verified_at = ? WHERE id = ?", nowIso(), user.id);
+    await notify({
       userId: user.id,
       type: "account",
       title: "Email verified by support",
@@ -59,7 +59,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
     const days = parsed.data.days ?? 7;
     const endsAt = new Date(Date.now() + days * 86_400_000).toISOString();
-    run(
+    await run(
       `INSERT INTO restrictions (id, user_id, reason, detail, status, starts_at, ends_at, created_by, created_at)
        VALUES (?, ?, ?, ?, 'active', ?, ?, ?, ?)`,
       randomId("res_"),
@@ -71,31 +71,31 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       auth.user.id,
       nowIso(),
     );
-    run(
+    await run(
       "UPDATE users SET restricted_until = ?, restriction_reason = ? WHERE id = ?",
       endsAt,
       reason,
       user.id,
     );
-    notify({
+    await notify({
       userId: user.id,
       type: "restriction",
       title: "Booking access temporarily limited",
       body: `New bookings are paused until ${new Date(endsAt).toLocaleDateString("en-IN")}. Reason: ${reason}. You can submit an appeal from Settings.`,
     });
   } else {
-    run(
+    await run(
       "UPDATE users SET restricted_until = NULL, restriction_reason = NULL WHERE id = ?",
       user.id,
     );
-    run(
+    await run(
       `UPDATE restrictions SET status = 'reversed', reversed_by = ?, reversed_at = ?
        WHERE user_id = ? AND status = 'active'`,
       auth.user.id,
       nowIso(),
       user.id,
     );
-    notify({
+    await notify({
       userId: user.id,
       type: "restriction",
       title: "Booking access restored",
@@ -103,7 +103,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     });
   }
 
-  logAudit({
+  await logAudit({
     actorId: auth.user.id,
     actorRole: "admin",
     action: `user.${action}`,

@@ -8,7 +8,7 @@ export const metadata = { title: "Counters" };
 
 export default async function OrgCountersPage() {
   const user = await requireOrgStaff();
-  const counters = orgCounters(user.org_id!);
+  const counters = await orgCounters(user.org_id!);
   return (
     <div className="space-y-6">
       <PageHeader

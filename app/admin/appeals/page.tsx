@@ -15,7 +15,7 @@ function statusClass(status: string) {
 
 export default async function AdminAppealsPage() {
   await requireRole("admin");
-  const appeals = adminAppeals();
+  const appeals = await adminAppeals();
   const pending = appeals.filter((appeal) => appeal.status === "pending").length;
 
   return (

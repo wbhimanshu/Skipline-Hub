@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LogOut, Menu, ShieldCheck, X } from "lucide-react";
 import { Logo } from "./logo";
 import { LanguageToggle } from "./language-toggle";
@@ -16,8 +16,31 @@ export function SiteHeader({ user }: { user: HeaderUser }) {
   const { t } = useLanguage();
   const { push } = useToast();
   const router = useRouter();
+  const headerRef = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    const node = headerRef.current;
+    if (!node) return;
+
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      node.classList.toggle("is-scrolled", window.scrollY > 14);
+    };
+    const request = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", request, { passive: true });
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", request);
+    };
+  }, []);
 
   const dashboardHref =
     user?.role === "admin" ? "/admin" : user?.role === "org" ? "/org" : "/dashboard";
@@ -49,7 +72,10 @@ export function SiteHeader({ user }: { user: HeaderUser }) {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-brand-500/10 bg-ink-950/85 backdrop-blur-md">
+    <header
+      ref={headerRef}
+      className="site-header sticky top-0 z-50 border-b border-brand-500/10 bg-ink-950/85 backdrop-blur-md"
+    >
       <div className="container-shell flex h-[68px] items-center justify-between gap-4">
         <Logo />
 
@@ -112,9 +138,11 @@ export function SiteHeader({ user }: { user: HeaderUser }) {
 
       <div
         id="mobile-menu"
+        aria-hidden={!open}
+        inert={!open}
         className={cn(
-          "overflow-hidden border-t border-brand-500/10 bg-ink-950 transition-all duration-300 lg:hidden",
-          open ? "max-h-[520px] opacity-100" : "max-h-0 opacity-0",
+          "absolute inset-x-0 top-full origin-top border-t border-brand-500/10 bg-ink-950/95 shadow-panel backdrop-blur-xl transition-[opacity,transform] duration-300 ease-out lg:hidden",
+          open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0",
         )}
       >
         <div className="container-shell flex flex-col gap-1 py-4">

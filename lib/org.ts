@@ -17,26 +17,26 @@ export type QueueTicket = Ticket & {
   priority_reason: string;
 };
 
-export function orgCounters(orgId: string) {
+export async function orgCounters(orgId: string) {
   return all<Counter>(
     "SELECT * FROM counters WHERE org_id = ? ORDER BY created_at ASC, name ASC",
     orgId,
   );
 }
 
-export function orgQueue(orgId: string) {
-  const waiting = all<QueueTicket>(
+export async function orgQueue(orgId: string) {
+  const waiting = await all<QueueTicket>(
     `SELECT t.*, u.name AS user_name, u.email AS user_email,
             e.id AS emergency_id, e.status AS emergency_status
      FROM tickets t
      JOIN users u ON u.id = t.user_id
      LEFT JOIN emergency_requests e ON e.ticket_id = t.id AND e.status IN ('pending','approved')
-     WHERE t.org_id = ? AND t.queue_date = date('now','localtime') AND t.status = 'waiting'
+     WHERE t.org_id = ? AND t.queue_date = CURRENT_DATE::text AND t.status = 'waiting'
      ORDER BY CASE t.priority WHEN 'emergency' THEN 0 WHEN 'senior' THEN 1 WHEN 'disability' THEN 1 ELSE 2 END,
               t.created_at ASC`,
     orgId,
   );
-  const serving = all<QueueTicket>(
+  const serving = await all<QueueTicket>(
     `SELECT t.*, u.name AS user_name, u.email AS user_email,
             c.name AS counter_name,
             e.id AS emergency_id, e.status AS emergency_status
@@ -44,11 +44,11 @@ export function orgQueue(orgId: string) {
      JOIN users u ON u.id = t.user_id
      LEFT JOIN counters c ON c.id = t.counter_id
      LEFT JOIN emergency_requests e ON e.ticket_id = t.id AND e.status IN ('pending','approved')
-     WHERE t.org_id = ? AND t.queue_date = date('now','localtime') AND t.status = 'serving'
+     WHERE t.org_id = ? AND t.queue_date = CURRENT_DATE::text AND t.status = 'serving'
      ORDER BY t.called_at ASC`,
     orgId,
   );
-  const booked = all<QueueTicket>(
+  const booked = await all<QueueTicket>(
     `SELECT t.*, u.name AS user_name, u.email AS user_email,
             e.id AS emergency_id, e.status AS emergency_status
      FROM tickets t
@@ -62,7 +62,7 @@ export function orgQueue(orgId: string) {
   return { waiting, serving, booked };
 }
 
-export function orgAppointments(orgId: string, limit = 100) {
+export async function orgAppointments(orgId: string, limit = 100) {
   return all<QueueTicket>(
     `SELECT t.*, u.name AS user_name, u.email AS user_email,
             e.id AS emergency_id, e.status AS emergency_status
@@ -76,7 +76,7 @@ export function orgAppointments(orgId: string, limit = 100) {
   );
 }
 
-export function orgEmergencyRequests(orgId: string) {
+export async function orgEmergencyRequests(orgId: string) {
   return all<{
     id: string;
     ticket_id: string;
@@ -105,10 +105,10 @@ export function orgEmergencyRequests(orgId: string) {
   );
 }
 
-export function orgSnapshot(orgId: string) {
-  const org = getOrganisation(orgId) as Organisation;
+export async function orgSnapshot(orgId: string) {
+  const org = (await getOrganisation(orgId)) as Organisation;
   const today = todayKey();
-  const stats = one<{
+  const stats = await one<{
     visitors: number;
     waiting: number;
     serving: number;
@@ -124,7 +124,7 @@ export function orgSnapshot(orgId: string) {
     orgId,
     today,
   );
-  const pendingEmergency = one<{ c: number }>(
+  const pendingEmergency = await one<{ c: number }>(
     "SELECT COUNT(*) AS c FROM emergency_requests WHERE org_id = ? AND status = 'pending'",
     orgId,
   );

@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     const params = req.nextUrl.searchParams;
     const lat = Number(params.get("lat"));
     const lng = Number(params.get("lng"));
-    const centres = listCentres({
+    const centres = await listCentres({
       query: params.get("q") || undefined,
       category: params.get("category") || undefined,
       sort: params.get("sort") || undefined,

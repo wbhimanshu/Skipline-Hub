@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   if (parsed.error) return parsed.error;
   const { name, email, password } = parsed.data;
 
-  const existing = one<{ id: string }>("SELECT id FROM users WHERE email = ?", email);
+  const existing = await one<{ id: string }>("SELECT id FROM users WHERE lower(email) = lower(?)", email);
   if (existing) {
     return jsonError("An account with this email already exists.", 409, {
       fields: { email: "This email is already registered. Try signing in instead." },
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   const userId = randomId("usr_");
   const expires = new Date(Date.now() + 24 * 60 * 60_000).toISOString();
 
-  run(
+  await run(
     `INSERT INTO users
       (id, name, email, password_hash, role, phone, verification_token, verification_expires_at, created_at)
      VALUES (?, ?, ?, ?, 'user', '', ?, ?, ?)`,
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     actionUrl: mail.url,
   });
 
-  logAudit({
+  await logAudit({
     actorId: userId,
     actorRole: "user",
     action: "account.registered",

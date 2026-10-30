@@ -8,7 +8,7 @@ export const metadata = { title: "Fairness settings" };
 
 export default async function AdminSettingsPage() {
   await requireRole("admin");
-  const settings = fairnessSettings();
+  const settings = await fairnessSettings();
   return (
     <div className="space-y-6">
       <PageHeader

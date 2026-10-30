@@ -29,19 +29,19 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const user = one<{
+  const user = await one<{
     id: string;
     name: string;
     email: string;
     role: string;
     org_id: string | null;
-  }>("SELECT id, name, email, role, org_id FROM users WHERE email = ?", email);
+  }>("SELECT id, name, email, role, org_id FROM users WHERE lower(email) = lower(?)", email);
 
   let devLink: string | undefined;
   if (user) {
     const token = randomBytes(32).toString("hex");
     const expires = new Date(Date.now() + 60 * 60_000).toISOString();
-    run(
+    await run(
       "UPDATE users SET reset_token = ?, reset_expires_at = ? WHERE id = ?",
       token,
       expires,
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       actionUrl: mail.url,
     });
     if (devLinksEnabled()) devLink = mail.url;
-    logAudit({
+    await logAudit({
       actorId: user.id,
       actorRole: user.role,
       orgId: user.org_id,

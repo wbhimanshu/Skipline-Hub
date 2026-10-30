@@ -25,7 +25,7 @@ export async function PATCH(
   const parsed = await parseBody(req, emergencyDecisionSchema);
   if (parsed.error) return parsed.error;
   try {
-    const result = reviewEmergency({
+    const result = await reviewEmergency({
       emergencyId: id,
       orgId: auth.user.org_id!,
       actorId: auth.user.id,

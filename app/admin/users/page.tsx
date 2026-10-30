@@ -15,7 +15,7 @@ export default async function AdminUsersPage({
   await requireRole("admin");
   const params = await searchParams;
   const query = params.q?.trim() || "";
-  const users = adminUsers(query);
+  const users = await adminUsers(query);
   const restricted = users.filter(
     (user) => user.restricted_until && new Date(user.restricted_until).getTime() > Date.now(),
   ).length;

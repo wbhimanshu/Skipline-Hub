@@ -34,14 +34,14 @@ export async function POST(req: NextRequest) {
   if (!limit.ok) return jsonError("You can submit up to 3 appeals per day.", 429);
 
   try {
-    const restriction = one<{ id: string; user_id: string; status: string }>(
+    const restriction = await one<{ id: string; user_id: string; status: string }>(
       "SELECT id, user_id, status FROM restrictions WHERE id = ?",
       parsed.data.restrictionId,
     );
     if (!restriction || restriction.user_id !== auth.user.id) {
       return jsonError("Restriction not found.", 404);
     }
-    const existing = one<{ id: string }>(
+    const existing = await one<{ id: string }>(
       "SELECT id FROM appeals WHERE restriction_id = ? AND status = 'pending'",
       restriction.id,
     );
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       return jsonError("An appeal for this restriction is already pending review.", 409);
     }
     const id = randomId("apl_");
-    run(
+    await run(
       `INSERT INTO appeals (id, restriction_id, user_id, message, status, created_at)
        VALUES (?, ?, ?, ?, 'pending', ?)`,
       id,
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       parsed.data.message,
       nowIso(),
     );
-    logAudit({
+    await logAudit({
       actorId: auth.user.id,
       actorRole: "user",
       action: "appeal.submitted",

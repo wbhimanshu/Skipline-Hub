@@ -46,11 +46,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const user = one<LoginUser>(
+  const user = await one<LoginUser>(
     `SELECT u.id, u.name, u.email, u.password_hash, u.role, u.org_id, u.email_verified_at,
             o.status AS org_status
      FROM users u LEFT JOIN organizations o ON o.id = u.org_id
-     WHERE u.email = ?`,
+     WHERE lower(u.email) = lower(?)`,
     email,
   );
 
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     : await verifyPassword(password, "s2$00000000000000000000000000000000$00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
 
   if (!user || !valid) {
-    logAudit({
+    await logAudit({
       actorId: null,
       actorRole: "anonymous",
       action: "auth.login_failed",
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
 
   await createSession(user.id, Boolean(remember));
   resetRateLimit(`login-account:${email}`);
-  logAudit({
+  await logAudit({
     actorId: user.id,
     actorRole: user.role,
     orgId: user.org_id,
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
     details: { role: user.role },
     ip,
   });
-  run("UPDATE users SET last_login_at = ? WHERE id = ?", new Date().toISOString(), user.id);
+  await run("UPDATE users SET last_login_at = ? WHERE id = ?", new Date().toISOString(), user.id);
 
   return jsonOk({
     redirect: roleHome(user.role),

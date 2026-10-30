@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const id = randomId("rpt_");
-    run(
+    await run(
       `INSERT INTO reports (id, user_id, org_id, subject, message, status, created_at)
        VALUES (?, ?, ?, ?, ?, 'open', ?)`,
       id,
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       parsed.data.message,
       nowIso(),
     );
-    logAudit({
+    await logAudit({
       actorId: auth.user.id,
       actorRole: "user",
       orgId: parsed.data.orgId || null,

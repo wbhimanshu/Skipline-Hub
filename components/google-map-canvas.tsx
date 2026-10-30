@@ -2,62 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { MapPoint } from "@/components/map-canvas";
-
-type GoogleMapInstance = {
-  setCenter: (position: { lat: number; lng: number }) => void;
-  setZoom: (zoom: number) => void;
-};
-
-type GoogleMarkerInstance = {
-  setMap: (map: GoogleMapInstance | null) => void;
-  addListener: (event: string, handler: () => void) => { remove: () => void };
-};
-
-type GoogleInfoWindowInstance = {
-  setContent: (content: string) => void;
-  open: (options: { anchor: GoogleMarkerInstance; map: GoogleMapInstance }) => void;
-  close: () => void;
-};
-
-type GoogleMapsApi = {
-  maps: {
-    Map: new (
-      element: HTMLElement,
-      options: Record<string, unknown>,
-    ) => GoogleMapInstance;
-    Marker: new (options: Record<string, unknown>) => GoogleMarkerInstance;
-    InfoWindow: new (options: Record<string, unknown>) => GoogleInfoWindowInstance;
-    SymbolPath: { CIRCLE: number };
-  };
-};
-
-declare global {
-  interface Window {
-    google?: GoogleMapsApi;
-  }
-}
-
-let loaderPromise: Promise<GoogleMapsApi> | null = null;
-
-function loadGoogleMaps(apiKey: string) {
-  if (window.google?.maps) return Promise.resolve(window.google);
-  if (loaderPromise) return loaderPromise;
-
-  loaderPromise = new Promise<GoogleMapsApi>((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly&loading=async`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      if (window.google?.maps) resolve(window.google);
-      else reject(new Error("Google Maps did not initialise."));
-    };
-    script.onerror = () => reject(new Error("Google Maps could not be loaded."));
-    document.head.appendChild(script);
-  });
-
-  return loaderPromise;
-}
+import {
+  loadGoogleMaps,
+  type GoogleInfoWindowInstance,
+  type GoogleMapInstance,
+  type GoogleMarkerInstance,
+} from "@/lib/google-maps";
 
 function escapeHtml(value: string) {
   return value

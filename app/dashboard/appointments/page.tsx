@@ -10,12 +10,12 @@ export const metadata = { title: "Appointments" };
 
 export default async function AppointmentsPage() {
   const user = await requireRole("user");
-  const appointments = getUserTickets(user.id, 500)
-    .filter((ticket) => ticket.kind === "appointment")
-    .map(viewTicket);
-  const active = appointments.filter((ticket) =>
+  const tickets = await getUserTickets(user.id, 500);
+  const appointments = tickets.filter((ticket) => ticket.kind === "appointment");
+  const activeTickets = appointments.filter((ticket) =>
     ["booked", "waiting", "serving"].includes(ticket.status),
   );
+  const active = await Promise.all(activeTickets.map(viewTicket));
   const past = appointments.filter(
     (ticket) => !["booked", "waiting", "serving"].includes(ticket.status),
   );
@@ -130,7 +130,7 @@ export default async function AppointmentsPage() {
                 className="card flex items-center gap-3 p-4 glass-hover"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-slate-200">{ticket.org.name}</p>
+                  <p className="truncate text-xs font-semibold text-slate-200">{ticket.org_name}</p>
                   <p className="mt-0.5 text-[11px] text-slate-500">
                     {formatDateTime(ticket.scheduled_for)} · {ticket.token_no}
                   </p>

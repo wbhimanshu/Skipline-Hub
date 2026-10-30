@@ -47,7 +47,7 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  const row = one<UserRow>(
+  const row = await one<UserRow>(
     SESSION_SELECT,
     tokenHash(token),
     nowIso(),
@@ -67,7 +67,7 @@ export async function createSession(
     : Math.min(7, Number(process.env.SESSION_DAYS || 30));
   const expires = new Date(Date.now() + days * 86_400_000);
   const h = await headers();
-  run(
+  await run(
     `INSERT INTO sessions (id, token_hash, user_id, expires_at, created_at, user_agent, ip)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
     randomBytes(9).toString("hex"),
@@ -78,7 +78,7 @@ export async function createSession(
     (h.get("user-agent") || "").slice(0, 300),
     (h.get("x-forwarded-for") || "").split(",")[0]?.trim() || "",
   );
-  run("UPDATE users SET last_login_at = ? WHERE id = ?", nowIso(), userId);
+  await run("UPDATE users SET last_login_at = ? WHERE id = ?", nowIso(), userId);
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, {
     httpOnly: true,
@@ -94,7 +94,7 @@ export async function destroySession() {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (token) {
-    run("DELETE FROM sessions WHERE token_hash = ?", tokenHash(token));
+    await run("DELETE FROM sessions WHERE token_hash = ?", tokenHash(token));
   }
   jar.delete(SESSION_COOKIE);
 }

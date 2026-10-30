@@ -15,7 +15,7 @@ for (const suffix of ["", "-wal", "-shm"]) {
 }
 
 async function main() {
-  const { all, getDb } = await import("../lib/db");
+  const { all, getDb } = await import("../lib/db-sqlite");
   const db = getDb();
   const orgs = all<{ c: number }>("SELECT COUNT(*) AS c FROM organizations")[0];
   console.log("");

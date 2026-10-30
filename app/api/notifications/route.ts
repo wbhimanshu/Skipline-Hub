@@ -17,11 +17,11 @@ export async function GET() {
   const auth = await requireApi();
   if (auth.response) return auth.response;
   try {
-    const notifications = all<Record<string, unknown>>(
+    const notifications = await all<Record<string, unknown>>(
       `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 60`,
       auth.user.id,
     );
-    const unread = one<{ c: number }>(
+    const unread = await one<{ c: number }>(
       "SELECT COUNT(*) AS c FROM notifications WHERE user_id = ? AND read_at IS NULL",
       auth.user.id,
     );
@@ -45,13 +45,13 @@ export async function PATCH(req: NextRequest) {
   if (parsed.error) return parsed.error;
   try {
     if (parsed.data.all) {
-      run(
+      await run(
         "UPDATE notifications SET read_at = ? WHERE user_id = ? AND read_at IS NULL",
         nowIso(),
         auth.user.id,
       );
     } else if (parsed.data.id) {
-      run(
+      await run(
         "UPDATE notifications SET read_at = ? WHERE id = ? AND user_id = ?",
         nowIso(),
         parsed.data.id,

@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const parsed = await parseBody(req, verifySchema);
   if (parsed.error) return parsed.error;
 
-  const user = one<{
+  const user = await one<{
     id: string;
     name: string;
     email: string;
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  run(
+  await run(
     `UPDATE users SET email_verified_at = ?, verification_token = NULL,
        verification_expires_at = NULL WHERE id = ?`,
     nowIso(),
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
   );
 
   await createSession(user.id, false);
-  logAudit({
+  await logAudit({
     actorId: user.id,
     actorRole: user.role,
     orgId: user.org_id,

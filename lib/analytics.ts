@@ -32,14 +32,14 @@ export type OrgAnalytics = {
   waitTrend: Array<{ date: string; label: string; avgWait: number }>;
 };
 
-export function orgAnalytics(orgId: string): OrgAnalytics {
+export async function orgAnalytics(orgId: string): Promise<OrgAnalytics> {
   const today = todayKey();
-  const counters = one<{ total: number; active: number }>(
+  const counters = await one<{ total: number; active: number }>(
     `SELECT COUNT(*) AS total, SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS active
      FROM counters WHERE org_id = ?`,
     orgId,
   );
-  const now = one<{ waiting: number; serving: number }>(
+  const now = await one<{ waiting: number; serving: number }>(
     `SELECT
        SUM(CASE WHEN status = 'waiting' THEN 1 ELSE 0 END) AS waiting,
        SUM(CASE WHEN status = 'serving' THEN 1 ELSE 0 END) AS serving
@@ -47,7 +47,7 @@ export function orgAnalytics(orgId: string): OrgAnalytics {
     orgId,
     today,
   );
-  const todayStats = one<{
+  const todayStats = await one<{
     visitors: number;
     completed: number;
     cancelled: number;
@@ -60,18 +60,18 @@ export function orgAnalytics(orgId: string): OrgAnalytics {
     orgId,
     today,
   );
-  const service = one<{ avg_wait: number | null; avg_service: number | null; n: number }>(
+  const service = await one<{ avg_wait: number | null; avg_service: number | null; n: number }>(
     `SELECT
        AVG(CASE WHEN status = 'completed' AND completed_at IS NOT NULL
                 AND checked_in_at IS NOT NULL
-           THEN (julianday(completed_at) - julianday(checked_in_at)) * 1440 END) AS avg_wait,
+           THEN EXTRACT(EPOCH FROM (completed_at::timestamptz - checked_in_at::timestamptz)) / 60 END) AS avg_wait,
        AVG(CASE WHEN status = 'completed' THEN service_seconds END) AS avg_service,
        COUNT(*) AS n
      FROM tickets WHERE org_id = ? AND completed_at >= ?`,
     orgId,
     new Date(Date.now() - 30 * 86_400_000).toISOString(),
   );
-  const monthly = one<{ total: number; completed: number; cancelled: number }>(
+  const monthly = await one<{ total: number; completed: number; cancelled: number }>(
     `SELECT COUNT(*) AS total,
        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
        SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled
@@ -81,7 +81,7 @@ export function orgAnalytics(orgId: string): OrgAnalytics {
   );
 
   const days = daySeries(14);
-  const dailyRows = all<{ d: string; visitors: number; completed: number; cancelled: number }>(
+  const dailyRows = await all<{ d: string; visitors: number; completed: number; cancelled: number }>(
     `SELECT queue_date AS d, COUNT(*) AS visitors,
        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
        SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled
@@ -105,10 +105,10 @@ export function orgAnalytics(orgId: string): OrgAnalytics {
     };
   });
 
-  const hourlyRows = all<{ h: number; visitors: number; avg_wait: number | null }>(
-    `SELECT CAST(strftime('%H', created_at) AS INTEGER) AS h, COUNT(*) AS visitors,
+  const hourlyRows = await all<{ h: number; visitors: number; avg_wait: number | null }>(
+    `SELECT EXTRACT(HOUR FROM created_at::timestamptz)::int AS h, COUNT(*) AS visitors,
        AVG(CASE WHEN status = 'completed' AND completed_at IS NOT NULL AND checked_in_at IS NOT NULL
-           THEN (julianday(completed_at) - julianday(checked_in_at)) * 1440 END) AS avg_wait
+           THEN EXTRACT(EPOCH FROM (completed_at::timestamptz - checked_in_at::timestamptz)) / 60 END) AS avg_wait
      FROM tickets
      WHERE org_id = ? AND created_at >= ?
      GROUP BY h ORDER BY h`,
@@ -147,10 +147,10 @@ export function orgAnalytics(orgId: string): OrgAnalytics {
     });
   }
 
-  const waitRows = all<{ d: string; avg_wait: number }>(
+  const waitRows = await all<{ d: string; avg_wait: number }>(
     `SELECT queue_date AS d,
        AVG(CASE WHEN status = 'completed' AND completed_at IS NOT NULL AND checked_in_at IS NOT NULL
-           THEN (julianday(completed_at) - julianday(checked_in_at)) * 1440 END) AS avg_wait
+           THEN EXTRACT(EPOCH FROM (completed_at::timestamptz - checked_in_at::timestamptz)) / 60 END) AS avg_wait
      FROM tickets WHERE org_id = ? AND queue_date >= ?
      GROUP BY queue_date ORDER BY queue_date`,
     orgId,
@@ -208,53 +208,53 @@ export type AdminAnalytics = {
   topOrgs: Array<{ name: string; tickets: number; completed: number; avgWait: number | null }>;
 };
 
-export function adminAnalytics(): AdminAnalytics {
-  const users = one<{ total: number; customers: number; staff: number }>(
+export async function adminAnalytics(): Promise<AdminAnalytics> {
+  const users = await one<{ total: number; customers: number; staff: number }>(
     `SELECT COUNT(*) AS total,
        SUM(CASE WHEN role = 'user' THEN 1 ELSE 0 END) AS customers,
        SUM(CASE WHEN role = 'org' THEN 1 ELSE 0 END) AS staff
      FROM users WHERE role != 'admin'`,
   );
-  const orgs = one<{ total: number; pending: number; approved: number }>(
+  const orgs = await one<{ total: number; pending: number; approved: number }>(
     `SELECT COUNT(*) AS total,
        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending,
        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS approved
      FROM organizations`,
   );
   const today = todayKey();
-  const tickets = one<{ visitors: number; completed: number; cancelled: number }>(
+  const tickets = await one<{ visitors: number; completed: number; cancelled: number }>(
     `SELECT COUNT(*) AS visitors,
        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed,
        SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled
      FROM tickets WHERE queue_date = ?`,
     today,
   );
-  const waiting = one<{ c: number }>(
+  const waiting = await one<{ c: number }>(
     "SELECT COUNT(*) AS c FROM tickets WHERE status = 'waiting'",
   );
-  const wait = one<{ avg_wait: number | null }>(
-    `SELECT AVG((julianday(completed_at) - julianday(checked_in_at)) * 1440) AS avg_wait
+  const wait = await one<{ avg_wait: number | null }>(
+    `SELECT AVG(EXTRACT(EPOCH FROM (completed_at::timestamptz - checked_in_at::timestamptz)) / 60) AS avg_wait
      FROM tickets
      WHERE status = 'completed' AND completed_at IS NOT NULL AND checked_in_at IS NOT NULL
        AND completed_at >= ?`,
     new Date(Date.now() - 7 * 86_400_000).toISOString(),
   );
-  const reports = one<{ c: number }>(
+  const reports = await one<{ c: number }>(
     "SELECT COUNT(*) AS c FROM reports WHERE status != 'resolved'",
   );
-  const restrictions = one<{ c: number }>(
+  const restrictions = await one<{ c: number }>(
     "SELECT COUNT(*) AS c FROM restrictions WHERE status = 'active' AND ends_at > ?",
     new Date().toISOString(),
   );
 
   const days = daySeries(14);
-  const signupUsers = all<{ d: string; c: number }>(
-    `SELECT date(created_at) AS d, COUNT(*) AS c FROM users
+  const signupUsers = await all<{ d: string; c: number }>(
+    `SELECT created_at::date::text AS d, COUNT(*) AS c FROM users
      WHERE role = 'user' AND created_at >= ? GROUP BY d`,
     new Date(Date.now() - 14 * 86_400_000).toISOString(),
   );
-  const signupOrgs = all<{ d: string; c: number }>(
-    `SELECT date(created_at) AS d, COUNT(*) AS c FROM organizations
+  const signupOrgs = await all<{ d: string; c: number }>(
+    `SELECT created_at::date::text AS d, COUNT(*) AS c FROM organizations
      WHERE created_at >= ? GROUP BY d`,
     new Date(Date.now() - 14 * 86_400_000).toISOString(),
   );
@@ -269,7 +269,7 @@ export function adminAnalytics(): AdminAnalytics {
     organisations: orgMap.get(date) ?? 0,
   }));
 
-  const topRows = all<{
+  const topRows = await all<{
     name: string;
     tickets: number;
     completed: number;
@@ -278,7 +278,7 @@ export function adminAnalytics(): AdminAnalytics {
     `SELECT o.name, COUNT(t.id) AS tickets,
        SUM(CASE WHEN t.status = 'completed' THEN 1 ELSE 0 END) AS completed,
        AVG(CASE WHEN t.status = 'completed' AND t.checked_in_at IS NOT NULL
-           THEN (julianday(t.completed_at) - julianday(t.checked_in_at)) * 1440 END) AS avg_wait
+           THEN EXTRACT(EPOCH FROM (t.completed_at::timestamptz - t.checked_in_at::timestamptz)) / 60 END) AS avg_wait
      FROM organizations o
      LEFT JOIN tickets t ON t.org_id = o.id AND t.created_at >= ?
      WHERE o.status = 'approved'

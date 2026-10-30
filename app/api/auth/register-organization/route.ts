@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const existing = one<{ id: string }>("SELECT id FROM users WHERE email = ?", data.email);
+  const existing = await one<{ id: string }>("SELECT id FROM users WHERE lower(email) = lower(?)", data.email);
   if (existing) {
     return jsonError("An account with this email already exists.", 409, {
       fields: { email: "This email is already registered." },
@@ -59,14 +59,14 @@ export async function POST(req: NextRequest) {
   let baseSlug = slugify(data.orgName) || "service-centre";
   let slug = baseSlug;
   let n = 1;
-  while (one("SELECT id FROM organizations WHERE slug = ?", slug)) {
+  while (await one("SELECT id FROM organizations WHERE slug = ?", slug)) {
     n += 1;
     slug = `${baseSlug}-${n}`;
   }
   const expires = new Date(Date.now() + 24 * 60 * 60_000).toISOString();
 
-  withTransaction(() => {
-    run(
+  await withTransaction(async () => {
+    await run(
       `INSERT INTO organizations
         (id, name, slug, category, description, address, city, state, pincode, lat, lng, phone, email,
          open_time, close_time, slot_minutes, status, owner_user_id, services, created_at)
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       data.services || "",
       nowIso(),
     );
-    run(
+    await run(
       `INSERT INTO users
         (id, name, email, password_hash, role, org_id, phone, verification_token,
          verification_expires_at, created_at)
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     actionUrl: mail.url,
   });
 
-  logAudit({
+  await logAudit({
     actorId: userId,
     actorRole: "org",
     orgId,

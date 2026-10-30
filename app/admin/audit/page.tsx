@@ -26,7 +26,7 @@ export default async function AdminAuditPage({
   await requireRole("admin");
   const params = await searchParams;
   const query = params.q?.trim().toLowerCase() || "";
-  const rows = adminAuditLogs(400);
+  const rows = await adminAuditLogs(400);
   const logs = query
     ? rows.filter((row) =>
         [row.action, row.actor_name || "", row.org_name || "", row.entity, row.entity_id || ""]

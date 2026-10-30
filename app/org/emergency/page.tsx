@@ -9,7 +9,7 @@ export const metadata = { title: "Emergency triage" };
 
 export default async function OrgEmergencyPage() {
   const user = await requireOrgStaff();
-  const requests = orgEmergencyRequests(user.org_id!);
+  const requests = await orgEmergencyRequests(user.org_id!);
   const pending = requests.filter((request) => request.status === "pending").length;
 
   return (

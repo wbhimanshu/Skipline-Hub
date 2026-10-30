@@ -26,12 +26,14 @@ export const metadata = { title: "Operations overview" };
 export default async function OrgOverviewPage() {
   const user = await requireOrgStaff();
   const orgId = user.org_id!;
-  const snapshot = orgSnapshot(orgId);
-  const analytics = orgAnalytics(orgId);
-  const counters = orgCounters(orgId);
-  const queue = orgQueue(orgId);
-  const emergencies = orgEmergencyRequests(orgId).filter((item) => item.status === "pending");
-  const prediction = predictionForOrg(orgId);
+  const snapshot = await orgSnapshot(orgId);
+  const analytics = await orgAnalytics(orgId);
+  const counters = await orgCounters(orgId);
+  const queue = await orgQueue(orgId);
+  const emergencies = (await orgEmergencyRequests(orgId)).filter(
+    (item) => item.status === "pending",
+  );
+  const prediction = await predictionForOrg(orgId);
   const upcoming = queue.booked.slice(0, 4);
 
   return (
